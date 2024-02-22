@@ -1,16 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AccountModule } from './account/account.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { envValidator } from '../libs/utils/src/env/validator/env.validator';
-import { DatabaseModule } from '../libs/utils/src/database/database.module';
+import { UtilsModule } from '../libs/utils/src';
 
 @Module({
   imports: [
-    DatabaseModule,
+    UtilsModule,
     AccountModule,
     AuthModule,
     EventEmitterModule.forRoot({
@@ -26,6 +25,5 @@ import { DatabaseModule } from '../libs/utils/src/database/database.module';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

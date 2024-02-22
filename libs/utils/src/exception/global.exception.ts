@@ -37,8 +37,10 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
 
     response.status(status).json({
       status: ResponseStatusEnum.FAIL,
-      message: message?.message,
-      data: { error: message.error },
+      data: {
+        message: message?.message || 'error occur',
+        error: message.error,
+      },
     });
   }
 }

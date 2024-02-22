@@ -11,8 +11,14 @@ export class Account {
   @Prop()
   lastName: string;
 
-  @Prop()
+  @Prop({ index: true })
   email: string;
+
+  @Prop()
+  password: string;
+
+  @Prop({ type: Boolean })
+  verified: boolean;
 
   @Prop({ type: String })
   registrationMethod: RegistrationMethodEnum;

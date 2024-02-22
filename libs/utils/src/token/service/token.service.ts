@@ -19,12 +19,12 @@ export class TokenService {
 
   constructor(private config: ConfigService) {}
 
-  signToken({ id, role }: TokenDataDto): Promise<string> {
+  signToken(tokenData: TokenDataDto): Promise<string> {
     const tokenSecret = this.config.getOrThrow(EnvConfigEnum.TOKEN_SECRET);
 
     return new Promise((resolve, reject) => {
       jwt.sign(
-        { id, role },
+        tokenData,
         tokenSecret,
         // { expiresIn: 2 * 24 * 60 * 60 * 1000 },
         (err, encoded: string) => {
