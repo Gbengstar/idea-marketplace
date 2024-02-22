@@ -11,8 +11,4 @@ export class AccountService extends BaseService<Account> {
   ) {
     super(AccountModel);
   }
-
-  createAccount(data: Account) {
-    return this.create(data);
-  }
 }
