@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class RequestLoggerMiddleware implements NestMiddleware {
   private readonly logger = new Logger('Request Logger');
-  constructor() {}
+
   async use(req: Request, res: Response, next: NextFunction) {
     const formattedDate = `${new Date()
       .toISOString()
