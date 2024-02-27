@@ -13,6 +13,7 @@ import { envValidator } from '../libs/utils/src/env/validator/env.validator';
 import { UtilsModule } from '../libs/utils/src';
 import { TokenMiddleware } from '../libs/utils/src/token/middleware/token.middleware';
 import { RequestLoggerMiddleware } from '../libs/utils/src/middleware/requestLogger.middleware';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -30,6 +31,8 @@ import { RequestLoggerMiddleware } from '../libs/utils/src/middleware/requestLog
       envFilePath: ['.env'],
       validationSchema: envValidator,
     }),
+
+    ReviewModule,
   ],
   controllers: [AppController],
 })

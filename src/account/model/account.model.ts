@@ -17,6 +17,12 @@ export class Account {
   @Prop()
   password: string;
 
+  @Prop()
+  photo: string;
+
+  @Prop()
+  whatsapp: string;
+
   @Prop({ type: Boolean })
   verified: boolean;
 

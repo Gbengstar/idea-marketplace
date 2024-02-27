@@ -16,7 +16,6 @@ import { TokenService } from '../../../libs/utils/src/token/service/token.servic
 import { GoogleStrategyService } from '../../../libs/utils/src/auth-strategy/service/google-strategy.service';
 import { RolesEnum } from '../../../libs/utils/src/roles/enum/roles.enum';
 import { AccountService } from '../../account/service/account.service';
-import { Account } from '../../account/model/account.model';
 import { RegistrationMethodEnum } from '../../account/enum/account.enum';
 import {
   ObjectValidationPipe,
@@ -54,7 +53,7 @@ export class AuthController {
       token,
     );
 
-    const accountData: Account = {
+    const accountData = {
       email: googleData.email,
       firstName: googleData.given_name,
       lastName: googleData.family_name,
@@ -93,7 +92,7 @@ export class AuthController {
   ) {
     const session = await this.accountService.getSession();
     try {
-      const accountData: Account = {
+      const accountData = {
         email,
         firstName: '',
         lastName: '',
