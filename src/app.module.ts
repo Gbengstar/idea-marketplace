@@ -38,22 +38,24 @@ import { ReviewModule } from './review/review.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestLoggerMiddleware).forRoutes({
+      path: '*',
+      method: RequestMethod.ALL,
+    });
     consumer
       .apply(TokenMiddleware)
       .exclude(
         { path: '/', method: RequestMethod.GET },
-        { path: '/auth/vendor/local-sign-up', method: RequestMethod.POST },
-        { path: '/auth/vendor/local-login', method: RequestMethod.POST },
-        { path: '/auth/verify-otp', method: RequestMethod.POST },
+        {
+          path: '/api/v1/auth/vendor/local-sign-up',
+          method: RequestMethod.POST,
+        },
+        { path: '/api/v1/auth/vendor/local-login', method: RequestMethod.POST },
+        { path: '/api/v1/auth/verify-otp', method: RequestMethod.POST },
       )
       .forRoutes({
         path: '*',
         method: RequestMethod.ALL,
       });
-
-    consumer.apply(RequestLoggerMiddleware).forRoutes({
-      path: '*',
-      method: RequestMethod.ALL,
-    });
   }
 }
