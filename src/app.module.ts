@@ -38,10 +38,13 @@ import { ReviewModule } from './review/review.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestLoggerMiddleware).forRoutes({
-      path: '*',
-      method: RequestMethod.ALL,
-    });
+    consumer
+      .apply(RequestLoggerMiddleware)
+      .exclude({ path: '/api/v1', method: RequestMethod.GET })
+      .forRoutes({
+        path: '*',
+        method: RequestMethod.ALL,
+      });
     consumer
       .apply(TokenMiddleware)
       .exclude(
