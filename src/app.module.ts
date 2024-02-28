@@ -45,7 +45,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(TokenMiddleware)
       .exclude(
-        { path: '/', method: RequestMethod.GET },
+        { path: '/api/v1', method: RequestMethod.GET },
         {
           path: '/api/v1/auth/vendor/local-sign-up',
           method: RequestMethod.POST,
