@@ -178,7 +178,7 @@ export class AuthController {
     @TokenDecorator() { id }: TokenDataDto,
   ) {
     await this.accountService.findByIdAndUpdateOrErrorOut(id, {
-      password: await hash(password),
+      $set: { password: await hash(password) },
     });
 
     return { message: 'password updated' };
@@ -206,6 +206,7 @@ export class AuthController {
         'please verify your account and update your password',
       );
     }
+    this.logger.debug({ account });
 
     const correctPassword = await verifyHash(account.password, password);
     if (!correctPassword) {

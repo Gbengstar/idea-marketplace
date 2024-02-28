@@ -42,15 +42,9 @@ export class AppModule implements NestModule {
       .apply(TokenMiddleware)
       .exclude(
         { path: '/', method: RequestMethod.GET },
-        { path: '/employees/check/:employeeId', method: RequestMethod.GET },
-        { path: '/employees/login', method: RequestMethod.POST },
-        { path: '/admins/sign-up', method: RequestMethod.POST },
-        { path: '/admins/login', method: RequestMethod.POST },
-        { path: '/otp', method: RequestMethod.POST },
-        { path: '/otp/admin', method: RequestMethod.POST },
-        { path: '/otp/employee', method: RequestMethod.POST },
-        { path: '/business/search', method: RequestMethod.GET },
-        { path: '/request-access', method: RequestMethod.POST },
+        { path: '/auth/vendor/local-sign-up', method: RequestMethod.POST },
+        { path: '/auth/vendor/local-login', method: RequestMethod.POST },
+        { path: '/auth/verify-otp', method: RequestMethod.POST },
       )
       .forRoutes({
         path: '*',

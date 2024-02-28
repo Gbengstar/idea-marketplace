@@ -1,6 +1,7 @@
 import * as Joi from 'joi';
-import { LocalSignUpDto } from '../dto/auth.dto';
+import { LocalLoginDto } from '../dto/auth.dto';
 
-export const localSignUpValidator = Joi.object<LocalSignUpDto>({
+export const localSignUpValidator = Joi.object<LocalLoginDto>({
   email: Joi.string().lowercase().email().required(),
+  password: Joi.string(),
 });
