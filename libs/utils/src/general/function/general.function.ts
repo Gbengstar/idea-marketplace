@@ -66,3 +66,8 @@ export function randomSixDigits() {
   const max = 999999;
   return String(Math.floor(Math.random() * (max - min + 1)) + min);
 }
+
+export function returnOnDev(data: Record<string, string>) {
+  if (process.env.NODE_ENV === 'production') return;
+  return data;
+}

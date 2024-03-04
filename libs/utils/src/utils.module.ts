@@ -3,6 +3,7 @@ import { AuthStrategyModule } from './auth-strategy/auth-strategy.module';
 import { OtpModule } from './otp/otp.module';
 import { DatabaseModule } from './database/database.module';
 import { TokenModule } from './token/token.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { TokenModule } from './token/token.module';
     DatabaseModule,
     TokenModule,
     DatabaseModule,
+    EmailModule,
   ],
 })
 export class UtilsModule {}
