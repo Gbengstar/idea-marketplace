@@ -34,6 +34,8 @@ import {
 import { AuthCheckGuard } from '../guard/auth.guard';
 import { passwordValidator } from '../../../libs/utils/src/validator/password.validator';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
+import { emailValidator } from '../../../libs/utils/src/validator/custom.validator';
+import { returnOnDev } from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('auth')
 export class AuthController {
@@ -222,5 +224,28 @@ export class AuthController {
     const accessToken = await this.tokenService.signToken(tokenData);
 
     return { accessToken, account };
+  }
+
+  @Post('forget-password')
+  async forgetPassword(
+    @Body('email', new StringValidationPipe(emailValidator))
+    email: string,
+  ) {
+    const account = await this.accountService.findOne({ email });
+    const code = `${randomInt(100000, 999999)}`;
+
+    if (account) {
+      await this.otpService.hashAndSaveOtp({ email, code: String(code) });
+    }
+
+    const hashCode = Buffer.from(JSON.stringify({ email, code })).toString(
+      'base64',
+    );
+
+    // TODO send mail
+
+    const link = `http://localhost:3000/reset-password?${hashCode}`;
+
+    return { message: 'email sent', data: returnOnDev({ link, code }) };
   }
 }

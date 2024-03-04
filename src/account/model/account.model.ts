@@ -31,6 +31,9 @@ export class Account {
 
   @Prop({ type: String })
   role: RolesEnum;
+
+  @Prop({ type: String })
+  resetPasswordToken: string;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

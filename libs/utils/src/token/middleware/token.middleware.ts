@@ -1,4 +1,3 @@
-import { AccountService } from './../../../../../src/account/service/account.service';
 import {
   BadGatewayException,
   BadRequestException,
@@ -8,16 +7,11 @@ import {
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { TokenService } from '../service/token.service';
-import { CacheService } from '@app/utils/cache/service/cache.services';
 
 @Injectable()
 export class TokenMiddleware implements NestMiddleware {
   private readonly logger = new Logger(TokenMiddleware.name);
-  constructor(
-    private readonly tokenService: TokenService,
-    private readonly cacheService: CacheService,
-    private readonly accountService: AccountService,
-  ) {}
+  constructor(private readonly tokenService: TokenService) {}
   async use(req: Request, res: Response, next: NextFunction) {
     try {
       const token = TokenService.getToken(req);

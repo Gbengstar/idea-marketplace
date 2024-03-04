@@ -22,7 +22,7 @@ async function bootstrap() {
 
   const port = configService.get<number>(EnvConfigEnum.PORT);
 
-  app.setGlobalPrefix('api/v1/');
+  app.setGlobalPrefix('/api/v1');
 
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new TokenMiddlewareGuard(reflector));
