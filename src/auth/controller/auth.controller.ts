@@ -246,6 +246,6 @@ export class AuthController {
 
     const link = `http://localhost:3000/reset-password?${hashCode}`;
 
-    return { message: 'email sent', data: returnOnDev({ link, code }) };
+    return { message: 'email sent', ...returnOnDev({ link, code }) };
   }
 }
