@@ -212,7 +212,9 @@ export class AuthController {
 
     const correctPassword = await verifyHash(account.password, password);
     if (!correctPassword) {
-      throw new UnauthorizedException('invalid email or password');
+      throw new UnauthorizedException(
+        'Please enter a valid email and password',
+      );
     }
 
     const tokenData: TokenDataDto = {
