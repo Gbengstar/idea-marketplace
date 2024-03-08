@@ -14,6 +14,9 @@ import { UtilsModule } from '../libs/utils/src';
 import { TokenMiddleware } from '../libs/utils/src/token/middleware/token.middleware';
 import { RequestLoggerMiddleware } from '../libs/utils/src/middleware/requestLogger.middleware';
 import { ReviewModule } from './review/review.module';
+import { NotificationModule } from './notification/notification.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { ProductModule } from './product/product.module';
 
 @Module({
   imports: [
@@ -33,6 +36,12 @@ import { ReviewModule } from './review/review.module';
     }),
 
     ReviewModule,
+
+    NotificationModule,
+
+    SubscriptionModule,
+
+    ProductModule,
   ],
   controllers: [AppController],
 })

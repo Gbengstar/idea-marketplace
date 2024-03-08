@@ -4,6 +4,7 @@ import { OtpModule } from './otp/otp.module';
 import { DatabaseModule } from './database/database.module';
 import { TokenModule } from './token/token.module';
 import { EmailModule } from './email/email.module';
+import { FileUploadModule } from './file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { EmailModule } from './email/email.module';
     TokenModule,
     DatabaseModule,
     EmailModule,
+    FileUploadModule,
   ],
 })
 export class UtilsModule {}
