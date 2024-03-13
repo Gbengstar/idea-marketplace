@@ -5,6 +5,7 @@ import { DatabaseModule } from './database/database.module';
 import { TokenModule } from './token/token.module';
 import { EmailModule } from './email/email.module';
 import { FileUploadModule } from './file-upload/file-upload.module';
+import { GoogleOauthModule } from './google-oauth/google-oauth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     DatabaseModule,
     EmailModule,
     FileUploadModule,
+    GoogleOauthModule,
   ],
 })
 export class UtilsModule {}

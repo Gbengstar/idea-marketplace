@@ -1,3 +1,4 @@
+import { Model } from 'mongoose';
 import { OtpService } from './../../../libs/utils/src/otp/services/otp.service';
 import {
   BadRequestException,
@@ -6,12 +7,10 @@ import {
   InternalServerErrorException,
   Logger,
   Post,
-  Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
+// import { AuthGuard } from '@nestjs/passport';
 import { TokenService } from '../../../libs/utils/src/token/service/token.service';
 import { GoogleStrategyService } from '../../../libs/utils/src/auth-strategy/service/google-strategy.service';
 import { RolesEnum } from '../../../libs/utils/src/roles/enum/roles.enum';
@@ -25,8 +24,15 @@ import { randomInt } from 'crypto';
 import { verifyOtpByEmailValidator } from '../../../libs/utils/src/otp/validators/otp.validator';
 import { VerifyOtpByEmailDto } from '../../../libs/utils/src/otp/dto/otp.dto';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { localSignUpValidator } from '../validator/auth.validator';
-import { LocalLoginDto, LocalSignUpDto } from '../dto/auth.dto';
+import {
+  googleSignUpValidator,
+  localSignUpValidator,
+} from '../validator/auth.validator';
+import {
+  GoogleSignUpDto,
+  LocalLoginDto,
+  LocalSignUpDto,
+} from '../dto/auth.dto';
 import {
   hash,
   verifyHash,
@@ -36,6 +42,7 @@ import { passwordValidator } from '../../../libs/utils/src/validator/password.va
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { emailValidator } from '../../../libs/utils/src/validator/custom.validator';
 import { returnOnDev } from '../../../libs/utils/src/general/function/general.function';
+import { GoogleOauthService } from '../../../libs/utils/src/google-oauth/service/google-oauth.service';
 
 @Controller('auth')
 export class AuthController {
@@ -45,45 +52,47 @@ export class AuthController {
     private readonly googleStrategyService: GoogleStrategyService,
     private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
+    private readonly googleOauthService: GoogleOauthService,
   ) {}
 
   @Post('vendor/google-sign-up')
-  @UseGuards(AuthCheckGuard, AuthGuard('google'))
-  async googleSignUp(@Req() req: Request) {
-    const token = TokenService.getToken(req);
-    const googleData = await this.googleStrategyService.verifyGoogleToken(
-      token,
-    );
+  // @UseGuards(AuthCheckGuard, AuthGuard('google'))
+  async googleSignUp(
+    @Body(new ObjectValidationPipe(googleSignUpValidator))
+    { token }: GoogleSignUpDto,
+  ) {
+    this.logger.log({ token });
+
+    const tokenInfo = await this.googleOauthService.getTokenInfo(token);
+
+    this.logger.log({ tokenInfo });
 
     const accountData = {
-      email: googleData.email,
-      firstName: googleData.given_name,
-      lastName: googleData.family_name,
+      email: tokenInfo.email,
+      firstName: '',
+      lastName: '',
       registrationMethod: RegistrationMethodEnum.GOOGLE,
       role: RolesEnum.VENDOR,
       password: '',
       verified: false,
     };
 
-    const code = randomInt(10000, 99999);
-
-    const clientSession = await this.accountService.getSession();
-    await clientSession.withTransaction(async (session) => {
-      await Promise.all([
-        this.accountService.createWithSession([{ ...accountData }], session),
-        this.otpService.createWithSession(
-          [{ email: googleData.email, code: String(code) }],
-          session,
-        ),
-      ]);
-    });
+    const account = new this.accountService.model(accountData);
 
     // TODO send OTP to email
 
-    return {
-      message: 'account successfully created, token sent to email',
-      code: this.otpService.voidForProductionEnv(code),
+    const tokenData: TokenDataDto = {
+      id: account._id.toString(),
+      role: account.role,
+      email: account.email,
     };
+
+    const [accessToken] = await Promise.all([
+      this.tokenService.signToken(tokenData),
+      account.save(),
+    ]);
+
+    return { accessToken };
   }
 
   @Post('vendor/local-sign-up')
@@ -216,6 +225,35 @@ export class AuthController {
         'Please enter a valid email and password',
       );
     }
+
+    const tokenData: TokenDataDto = {
+      id: account._id.toString(),
+      role: account.role,
+      email: account.email,
+    };
+
+    const accessToken = await this.tokenService.signToken(tokenData);
+
+    return { accessToken, account };
+  }
+
+  @Post('vendor/local-login')
+  async googleLogin(
+    @Body(new ObjectValidationPipe(localSignUpValidator))
+    { token }: GoogleSignUpDto,
+  ) {
+    const googleData = await this.googleOauthService.getTokenInfo(token);
+    const account = await this.accountService.findOneOrErrorOut({
+      email: googleData.email,
+      registrationMethod: RegistrationMethodEnum.GOOGLE,
+    });
+
+    if (!account) {
+      throw new BadRequestException(
+        'please login with valid email and password',
+      );
+    }
+    this.logger.debug({ account });
 
     const tokenData: TokenDataDto = {
       id: account._id.toString(),

@@ -65,6 +65,14 @@ export class AppModule implements NestModule {
         { path: '/api/v1/auth/vendor/local-login', method: RequestMethod.POST },
         { path: '/api/v1/auth/verify-otp', method: RequestMethod.POST },
         { path: '/api/v1/auth/forget-password', method: RequestMethod.POST },
+        {
+          path: '/api/v1/auth/vendor/google-sign-up',
+          method: RequestMethod.POST,
+        },
+        {
+          path: '/api/v1/auth/vendor/google-login',
+          method: RequestMethod.POST,
+        },
       )
       .forRoutes({
         path: '*',
