@@ -7,29 +7,28 @@ import {
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { ResponseStatusEnum } from '../general/response/response.dto';
-import * as Joi from 'joi';
 
 @Catch()
 export class GlobalExceptionsFilter extends BaseExceptionFilter {
   private logger = new Logger(GlobalExceptionsFilter.name);
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: HttpException, host: ArgumentsHost) {
     const context = host.switchToHttp();
     const response = context.getResponse();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: { message: string; error: string } = {
-      message: 'Internal Server Error',
-      error: 'Internal Server Error',
-    };
 
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      message = exception.getResponse() as { message: string; error: string };
-    }
+    switch (exception.name) {
+      case 'ValidationError': {
+        status = HttpStatus.BAD_REQUEST;
 
-    if (exception instanceof Joi.ValidationError) {
-      status = 400;
-      message = { message: exception.message, error: exception.name };
+        break;
+      }
+
+      case HttpException.name:
+        {
+          status = exception?.getStatus();
+        }
+        break;
     }
 
     this.logger.error(exception);
@@ -38,8 +37,8 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
     response.status(status).json({
       status: ResponseStatusEnum.FAIL,
       data: {
-        message: message?.message || 'error occur',
-        error: message.error,
+        message: exception?.message || 'error occur',
+        error: exception.name,
       },
     });
   }
