@@ -2,6 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { dbSchemaOptions } from '../../../libs/utils/src/database/config/db.config';
 import { RegistrationMethodEnum } from '../enum/account.enum';
 import { RolesEnum } from '../../../libs/utils/src/roles/enum/roles.enum';
+import { SchemaTypes } from 'mongoose';
+import { Store } from '../../store/model/store.model';
 
 @Schema(dbSchemaOptions)
 export class Account {
@@ -34,6 +36,9 @@ export class Account {
 
   @Prop({ type: String })
   resetPasswordToken: string;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: Store.name })
+  store: string;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

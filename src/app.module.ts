@@ -17,6 +17,7 @@ import { ReviewModule } from './review/review.module';
 import { NotificationModule } from './notification/notification.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { ProductModule } from './product/product.module';
+import { StoreModule } from './store/store.module';
 
 @Module({
   imports: [
@@ -42,6 +43,8 @@ import { ProductModule } from './product/product.module';
     SubscriptionModule,
 
     ProductModule,
+
+    StoreModule,
   ],
   controllers: [AppController],
 })
