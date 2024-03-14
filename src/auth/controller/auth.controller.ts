@@ -1,4 +1,3 @@
-import { Model } from 'mongoose';
 import { OtpService } from './../../../libs/utils/src/otp/services/otp.service';
 import {
   BadRequestException,
@@ -26,6 +25,7 @@ import { VerifyOtpByEmailDto } from '../../../libs/utils/src/otp/dto/otp.dto';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
 import {
   googleSignUpValidator,
+  localLoginValidator,
   localSignUpValidator,
 } from '../validator/auth.validator';
 import {
@@ -99,14 +99,12 @@ export class AuthController {
   @UseGuards(AuthCheckGuard)
   async localSignUp(
     @Body(new ObjectValidationPipe(localSignUpValidator))
-    { email }: LocalSignUpDto,
+    data: LocalSignUpDto,
   ) {
     const session = await this.accountService.getSession();
     try {
       const accountData = {
-        email,
-        firstName: '',
-        lastName: '',
+        ...data,
         registrationMethod: RegistrationMethodEnum.LOCAL,
         role: RolesEnum.VENDOR,
         password: '',
@@ -121,7 +119,7 @@ export class AuthController {
           session,
         );
         await this.otpService.hashAndSaveOtp(
-          { email, code: String(code) },
+          { email: data.email, code: String(code) },
           session,
         );
       });
@@ -197,7 +195,7 @@ export class AuthController {
 
   @Post('vendor/local-login')
   async localLogin(
-    @Body(new ObjectValidationPipe(localSignUpValidator))
+    @Body(new ObjectValidationPipe(localLoginValidator))
     { email, password }: LocalLoginDto,
   ) {
     const account = await this.accountService.findOneOrErrorOut({ email });
@@ -237,7 +235,7 @@ export class AuthController {
     return { accessToken, account };
   }
 
-  @Post('vendor/local-login')
+  @Post('vendor/google-login')
   async googleLogin(
     @Body(new ObjectValidationPipe(localSignUpValidator))
     { token }: GoogleSignUpDto,
