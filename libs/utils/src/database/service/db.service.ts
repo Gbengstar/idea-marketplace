@@ -379,7 +379,7 @@ export abstract class BaseService<C> {
     return this.model.find(data).populate(populate);
   }
 
-  aggregate(aggregationQuery) {
+  aggregate(aggregationQuery: PipelineStage[]) {
     return this.model.aggregate(aggregationQuery);
   }
 
