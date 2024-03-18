@@ -18,6 +18,7 @@ import { NotificationModule } from './notification/notification.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { ProductModule } from './product/product.module';
 import { StoreModule } from './store/store.module';
+import { CatalogModule } from './catalog/catalog.module';
 
 @Module({
   imports: [
@@ -45,6 +46,8 @@ import { StoreModule } from './store/store.module';
     ProductModule,
 
     StoreModule,
+
+    CatalogModule,
   ],
   controllers: [AppController],
 })
