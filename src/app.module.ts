@@ -19,6 +19,8 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { ProductModule } from './product/product.module';
 import { StoreModule } from './store/store.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { AdsModule } from './ads/ads.module';
+import { WishListModule } from './wish-list/wish-list.module';
 
 @Module({
   imports: [
@@ -48,6 +50,10 @@ import { CatalogModule } from './catalog/catalog.module';
     StoreModule,
 
     CatalogModule,
+
+    AdsModule,
+
+    WishListModule,
   ],
   controllers: [AppController],
 })
@@ -79,6 +85,8 @@ export class AppModule implements NestModule {
           path: '/api/v1/auth/vendor/google-login',
           method: RequestMethod.POST,
         },
+        { path: '/api/v1/store/search', method: RequestMethod.GET },
+        { path: '/api/v1/ads/search', method: RequestMethod.GET },
       )
       .forRoutes({
         path: '*',
