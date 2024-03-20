@@ -601,4 +601,24 @@ export abstract class BaseService<C> {
   //   if (data) return data;
   //   return new this.model(filter);
   // }
+
+  atlasSearch(text: string, path: string[]) {
+    const escapedText = text.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
+    return this.model.aggregate([
+      {
+        $search: {
+          text: {
+            query: escapedText,
+            path,
+            fuzzy: {
+              maxEdits: 2,
+            },
+          },
+          count: {
+            type: 'total',
+          },
+        },
+      },
+    ]);
+  }
 }

@@ -5,18 +5,24 @@ import {
   Logger,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { StoreService } from '../service/store.service';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
+import {
+  ObjectValidationPipe,
+  StringValidationPipe,
+} from '../../../libs/utils/src/pipe/validation.pipe';
 import {
   createStoreValidator,
   updateStoreValidator,
 } from '../validator/store.validator';
 import { Store } from '../model/store.model';
 import { CreateStoreGuard, UpdateStoreGuard } from '../guard/store.guard';
+
+import { stringValidator } from '../../../libs/utils/src/validator/custom.validator';
 
 @Controller('store')
 export class StoreController {
@@ -28,6 +34,14 @@ export class StoreController {
     return this.storeService.findOne({ account: token.id }, [
       { path: 'account' },
     ]);
+  }
+
+  @Get('search')
+  searchStore(
+    @Query('key', new StringValidationPipe(stringValidator)) key: string,
+  ) {
+    const path = ['businessName', 'description'];
+    return this.storeService.atlasSearch(key, path);
   }
 
   @Post()
