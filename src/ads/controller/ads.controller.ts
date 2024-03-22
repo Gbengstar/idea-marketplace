@@ -1,24 +1,25 @@
 import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
 import { AdsService } from '../service/ads.service';
-import { Ads } from '../model/ads.model';
+import { Ads, AdsDocument } from '../model/ads.model';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import {
-  ObjectValidationPipe,
-  StringValidationPipe,
-} from '../../../libs/utils/src/pipe/validation.pipe';
+import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
 import {
   createAdsValidator,
   distinctAdsPropValidator,
+  searchAdsValidator,
 } from '../validator/ads.validator';
-import { stringValidator } from '../../../libs/utils/src/validator/custom.validator';
-import { DistinctFilterDto } from '../dto/ads.dto';
+import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
+import { WishListService } from '../../wish-list/service/wish-list.service';
 
 @Controller('ads')
 export class AdsController {
   private readonly logger = new Logger(AdsController.name);
 
-  constructor(private readonly adsService: AdsService) {}
+  constructor(
+    private readonly adsService: AdsService,
+    private readonly wishList: WishListService,
+  ) {}
 
   @Post()
   createAds(
@@ -35,12 +36,24 @@ export class AdsController {
   }
 
   @Get('search')
-  searchAds(
-    @Query('key', new StringValidationPipe(stringValidator)) key: string,
+  async searchAds(
+    @Query(new ObjectValidationPipe(searchAdsValidator))
+    { keyword, account }: SearchAdsDto,
   ) {
-    this.logger.log({ key });
     const path = ['title', 'description', 'brandName', 'store'];
-    return this.adsService.atlasSearch(key, path);
+    const key = keyword || ' ';
+    const [ads, wishList] = await Promise.all([
+      this.adsService.atlasSearch<AdsDocument>(key, path),
+      this.wishList.findOne({ account }),
+    ]);
+
+    if (!(account && wishList?.wishList[0])) return ads;
+
+    for (const ad of ads) {
+      ad.wish = wishList.wishList.includes(ad._id);
+    }
+
+    return ads;
   }
 
   @Get()

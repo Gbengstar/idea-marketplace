@@ -596,15 +596,15 @@ export abstract class BaseService<C> {
     };
   };
 
-  // async findOneOrCreate(filter: FilterQuery<C>) {
-  //   const data = await this.model.findOne(filter);
-  //   if (data) return data;
-  //   return new this.model(filter);
-  // }
+  async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
+    const data = await this.model.findOne(filter);
+    if (data) return data;
+    return this.model.create(createData || {});
+  }
 
-  atlasSearch(text: string, path: string[]) {
+  atlasSearch<T = any>(text: string, path: string[]) {
     const escapedText = text.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
-    return this.model.aggregate([
+    return this.model.aggregate<T>([
       {
         $search: {
           text: {
