@@ -1,7 +1,7 @@
 import * as Joi from 'joi';
 import { Ads } from '../model/ads.model';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
-import { DistinctFilterDto } from '../dto/ads.dto';
+import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
 
 export const createAdsValidator = Joi.object<Ads>({
   store: objectIdValidator.required(),
@@ -31,4 +31,9 @@ export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
   brandName: Joi.string(),
   productOption: Joi.string(),
   condition: Joi.string(),
+});
+
+export const searchAdsValidator = Joi.object<SearchAdsDto>({
+  keyword: Joi.string().trim(),
+  account: objectIdValidator,
 });

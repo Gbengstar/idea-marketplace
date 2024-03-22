@@ -1,4 +1,4 @@
-import { SchemaTypes } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 import { dbSchemaOptions } from './../../../libs/utils/src/database/config/db.config';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
@@ -51,6 +51,11 @@ export class Ads {
 
   @Prop()
   hidden: boolean;
+
+  @Prop({ default: false })
+  wish: boolean;
 }
+
+export type AdsDocument = Ads & Document<Types.ObjectId>;
 
 export const AdsSchema = SchemaFactory.createForClass(Ads);
