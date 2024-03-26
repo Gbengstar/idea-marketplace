@@ -23,6 +23,8 @@ import { Store } from '../model/store.model';
 import { CreateStoreGuard, UpdateStoreGuard } from '../guard/store.guard';
 
 import { stringValidator } from '../../../libs/utils/src/validator/custom.validator';
+import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
+import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
 
 @Controller('store')
 export class StoreController {
@@ -34,6 +36,14 @@ export class StoreController {
     return this.storeService.findOne({ account: token.id }, [
       { path: 'account' },
     ]);
+  }
+
+  @Get('landing-page')
+  landingPage(
+    @Query(new ObjectValidationPipe(paginationValidator))
+    paginate: PaginationDto,
+  ) {
+    return this.storeService.paginatedResult(paginate, {}, {});
   }
 
   @Get('search')

@@ -88,6 +88,8 @@ export class AppModule implements NestModule {
         { path: '/api/v1/store/search', method: RequestMethod.GET },
         { path: '/api/v1/ads/search', method: RequestMethod.GET },
         { path: '/api/v1/promotion', method: RequestMethod.GET },
+        { path: '/api/v1/store/landing-page', method: RequestMethod.GET },
+        { path: '/api/v1/ads/landing-page', method: RequestMethod.GET },
       )
       .forRoutes({
         path: '*',

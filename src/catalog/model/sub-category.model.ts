@@ -17,7 +17,7 @@ export class SubCategory {
   @Prop()
   position: number;
 
-  @Prop()
+  @Prop({ select: false })
   hidden: boolean;
 }
 

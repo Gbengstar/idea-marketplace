@@ -12,7 +12,7 @@ export class Category {
   @Prop()
   position: number;
 
-  @Prop()
+  @Prop({ select: false })
   hidden: boolean;
 }
 
