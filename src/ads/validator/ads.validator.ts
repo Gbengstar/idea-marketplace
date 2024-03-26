@@ -1,3 +1,4 @@
+import { paginationValidator } from './../../../libs/utils/src/pagination/validator/paginate.validator';
 import * as Joi from 'joi';
 import { Ads } from '../model/ads.model';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
@@ -33,7 +34,13 @@ export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
   condition: Joi.string(),
 });
 
-export const searchAdsValidator = Joi.object<SearchAdsDto>({
+export const searchAdsValidator = paginationValidator.append<SearchAdsDto>({
   keyword: Joi.string().trim(),
   account: objectIdValidator,
+  location: Joi.string().trim(),
+  verifiedVendor: Joi.boolean(),
+  negotiable: Joi.boolean(),
+  condition: Joi.string().trim(),
+  category: objectIdValidator,
+  subCategory: objectIdValidator,
 });

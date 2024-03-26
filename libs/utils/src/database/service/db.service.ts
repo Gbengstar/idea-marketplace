@@ -67,16 +67,16 @@ export abstract class BaseService<C> {
       ),
     );
   }
-  async paginatedResult(
-    query: Partial<PaginationDto>,
+  async paginatedResult<T>(
+    paginateData: Partial<PaginationDto>,
     filter: FilterQuery<C>,
     sort?: string | { [key: string]: SortOrder },
     population?: Array<PopulateOptions> | any,
-  ): Promise<PaginationResponseDto<C>> {
-    const { limit, page } = query;
+  ): Promise<PaginationResponseDto<T>> {
+    const { limit, page } = paginateData;
     const [foundItems, count] = await Promise.all([
       this.model
-        .find(filter)
+        .find<T>(filter)
         .skip((page - 1) * limit)
         .sort(sort ?? { createdAt: -1 })
         .limit(limit + 2)

@@ -11,6 +11,7 @@ import {
 } from '../validator/ads.validator';
 import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
 import { WishListService } from '../../wish-list/service/wish-list.service';
+import { FilterQuery } from 'mongoose';
 
 @Controller('ads')
 export class AdsController {
@@ -35,6 +36,37 @@ export class AdsController {
     return this.adsService.find({ account: id });
   }
 
+  @Get('landing-page')
+  async landingPageAds(
+    @Query(new ObjectValidationPipe(searchAdsValidator))
+    { page, limit, ...query }: SearchAdsDto,
+  ) {
+    const filter: FilterQuery<Ads> = {};
+    if ('condition' in query) filter.condition = query.condition;
+    if ('location' in query) filter.store.location = query.location;
+    if ('negotiable' in query) filter.negotiable = query.negotiable;
+    if ('verifiedVendor' in query)
+      filter.account.verified = query.verifiedVendor;
+
+    const [ads, wishList] = await Promise.all([
+      this.adsService.paginatedResult<AdsDocument>(
+        { limit, page },
+        filter,
+        {},
+        'store category subCategory',
+      ),
+      this.wishList.findOne({ account: query.account }),
+    ]);
+
+    if (!(query.account && wishList?.wishList[0])) return ads;
+
+    for (const ad of ads.foundItems) {
+      ad.wish = wishList.wishList.includes(ad._id);
+    }
+
+    return ads;
+  }
+
   @Get('search')
   async searchAds(
     @Query(new ObjectValidationPipe(searchAdsValidator))
@@ -42,6 +74,7 @@ export class AdsController {
   ) {
     const path = ['title', 'description', 'brandName', 'store'];
     const key = keyword || ' ';
+
     const [ads, wishList] = await Promise.all([
       this.adsService.atlasSearch<AdsDocument>(key, path),
       this.wishList.findOne({ account }),
