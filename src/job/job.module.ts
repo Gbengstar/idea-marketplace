@@ -9,6 +9,7 @@ import { ProfileService } from './service/profile.service';
 @Module({
   controllers: [JobController],
   providers: [JobService, ProfileService],
+  exports: [JobService, ProfileService],
   imports: [
     MongooseModule.forFeatureAsync([
       { name: Profile.name, useFactory: () => ProfileSchema },

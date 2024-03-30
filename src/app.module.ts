@@ -22,6 +22,7 @@ import { AdsModule } from './ads/ads.module';
 import { WishListModule } from './wish-list/wish-list.module';
 import { PromotionModule } from './promotion/promotion.module';
 import { JobModule } from './job/job.module';
+import { TalentModule } from './talent/talent.module';
 
 @Module({
   imports: [
@@ -57,6 +58,8 @@ import { JobModule } from './job/job.module';
     PromotionModule,
 
     JobModule,
+
+    TalentModule,
   ],
   controllers: [AppController],
 })
@@ -94,6 +97,8 @@ export class AppModule implements NestModule {
         { path: '/api/v1/store/landing-page', method: RequestMethod.GET },
         { path: '/api/v1/ads/landing-page', method: RequestMethod.GET },
         { path: '/api/v1/job/landing-page', method: RequestMethod.GET },
+        { path: '/api/v1/catalog/category', method: RequestMethod.GET },
+        { path: '/api/v1/catalog/sub-category', method: RequestMethod.GET },
       )
       .forRoutes({
         path: '*',

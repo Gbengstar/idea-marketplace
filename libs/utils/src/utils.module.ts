@@ -6,6 +6,8 @@ import { TokenModule } from './token/token.module';
 import { EmailModule } from './email/email.module';
 import { FileUploadModule } from './file-upload/file-upload.module';
 import { GoogleOauthModule } from './google-oauth/google-oauth.module';
+import { CronJobModule } from './cron-job/cron-job.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { GoogleOauthModule } from './google-oauth/google-oauth.module';
     EmailModule,
     FileUploadModule,
     GoogleOauthModule,
+    CronJobModule,
+    ScheduleModule.forRoot(),
   ],
 })
 export class UtilsModule {}

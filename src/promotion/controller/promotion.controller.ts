@@ -6,6 +6,7 @@ import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.de
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
 import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
 import { createPromotionValidator } from '../validator/promotion.validator';
+import { AccountPromotion } from '../model/account-promotion.model';
 
 @Controller('promotion')
 export class PromotionController {
@@ -13,6 +14,29 @@ export class PromotionController {
     private readonly promotionService: PromotionService,
     private readonly accountPromotionService: AccountPromotionService,
   ) {}
+
+  @Post('account')
+  async createAccountPromotion(
+    @TokenDecorator() { id: account }: TokenDataDto,
+  ) {
+    const accountPromotion: AccountPromotion = {
+      promotion: '65fd862c601fcf15d29633e1',
+
+      account,
+
+      promotionItems: [],
+
+      dueDate: new Date('2024-03-30'),
+    };
+
+    const promotion = await this.accountPromotionService.create(
+      accountPromotion,
+    );
+
+    await this.accountPromotionService.startPromotion(account);
+
+    return promotion;
+  }
 
   @Post()
   createPromotion(
@@ -44,8 +68,8 @@ export class PromotionController {
     return this.promotionService.create(promotion);
   }
 
-  @Get()
+  @Get('account')
   getAccountPromotion(@TokenDecorator() { id: account }: TokenDataDto) {
-    return this.accountPromotionService.find({ account });
+    return this.accountPromotionService.lastSubscription(account);
   }
 }
