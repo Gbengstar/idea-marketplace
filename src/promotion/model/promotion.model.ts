@@ -1,10 +1,11 @@
+import { PromotionTypeEnum } from '../enum/promotion.enum';
 import { dbSchemaOptions } from './../../../libs/utils/src/database/config/db.config';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema(dbSchemaOptions)
 export class Promotion {
-  @Prop({ unique: true })
-  name: string;
+  @Prop({ type: String, unique: true })
+  name: PromotionTypeEnum;
 
   @Prop()
   amount: number;

@@ -12,6 +12,9 @@ export class AccountPromotion {
   @Prop({ type: SchemaTypes.ObjectId, ref: Account.name })
   account: string;
 
+  @Prop({ type: [String] })
+  promotionItems: string[];
+
   @Prop({ type: Date })
   dueDate: Date;
 }

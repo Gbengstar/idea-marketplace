@@ -8,6 +8,7 @@ import { WishListModule } from '../wish-list/wish-list.module';
 @Module({
   controllers: [AdsController],
   providers: [AdsService],
+  exports: [AdsService],
   imports: [
     WishListModule,
     MongooseModule.forFeatureAsync([

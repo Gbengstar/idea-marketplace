@@ -37,6 +37,9 @@ export class Job {
   @Prop()
   description: string;
 
+  @Prop()
+  publishedDate: Date;
+
   @Prop({ type: String })
   status: StatusEnum;
 }
