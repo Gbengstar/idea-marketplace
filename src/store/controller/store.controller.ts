@@ -11,20 +11,20 @@ import {
 import { StoreService } from '../service/store.service';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import {
-  ObjectValidationPipe,
-  StringValidationPipe,
-} from '../../../libs/utils/src/pipe/validation.pipe';
+import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
 import {
   createStoreValidator,
   updateStoreValidator,
 } from '../validator/store.validator';
 import { Store } from '../model/store.model';
 import { CreateStoreGuard, UpdateStoreGuard } from '../guard/store.guard';
-
-import { stringValidator } from '../../../libs/utils/src/validator/custom.validator';
-import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
-import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
+import { SearchStoreDto } from '../dto/store.dto';
+import { FilterQuery, PipelineStage } from 'mongoose';
+import {
+  keywordSearchValidator,
+  landingPageSearchValidator,
+} from '../../../libs/utils/src/validator/search.validator';
+import { KeywordPaginatedSearchDto } from '../../../libs/utils/src/dto/search.dto';
 
 @Controller('store')
 export class StoreController {
@@ -40,18 +40,34 @@ export class StoreController {
 
   @Get('landing-page')
   landingPage(
-    @Query(new ObjectValidationPipe(paginationValidator))
-    paginate: PaginationDto,
+    @Query(new ObjectValidationPipe(landingPageSearchValidator))
+    { page, limit, ...query }: SearchStoreDto,
   ) {
-    return this.storeService.paginatedResult(paginate, {}, {});
+    const filter: FilterQuery<Store> = {};
+    if ('id' in query) filter._id = query.id;
+    return this.storeService.paginatedResult({ page, limit }, filter, {});
   }
 
   @Get('search')
-  searchStore(
-    @Query('key', new StringValidationPipe(stringValidator)) key: string,
+  SearchStore(
+    @Query(new ObjectValidationPipe(keywordSearchValidator))
+    { keyword, ...paginate }: KeywordPaginatedSearchDto,
   ) {
-    const path = ['businessName', 'description'];
-    return this.storeService.atlasSearch(key, path);
+    const escapedText = keyword.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
+    const pipeline: PipelineStage[] = [
+      {
+        $match: {
+          $or: [
+            { businessName: { $regex: escapedText, $options: 'i' } },
+            { description: { $regex: escapedText, $options: 'i' } },
+          ],
+        },
+      },
+    ];
+
+    return this.storeService.aggregatePagination(paginate, pipeline, {
+      createdAt: -1,
+    });
   }
 
   @Post()

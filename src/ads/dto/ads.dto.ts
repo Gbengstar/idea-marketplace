@@ -4,6 +4,7 @@ import { Ads } from '../model/ads.model';
 export type DistinctFilterDto = { distinct: string } & Ads;
 
 export type SearchAdsDto = PaginationDto & {
+  id: string;
   keyword: string;
   account: string;
   location: string;

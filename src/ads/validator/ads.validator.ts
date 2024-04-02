@@ -35,6 +35,7 @@ export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
 });
 
 export const searchAdsValidator = paginationValidator.append<SearchAdsDto>({
+  id: objectIdValidator,
   keyword: Joi.string().trim(),
   account: objectIdValidator,
   location: Joi.string().trim(),
