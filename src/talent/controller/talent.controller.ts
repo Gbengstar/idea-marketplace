@@ -6,6 +6,15 @@ import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pi
 import { searchAdsValidator } from '../../ads/validator/ads.validator';
 import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import { Talent } from '../model/talent.model';
+import {
+  keywordSearchValidator,
+  landingPageSearchValidator,
+} from '../../../libs/utils/src/validator/search.validator';
+import {
+  KeywordPaginatedSearchDto,
+  LandingPagePaginatedSearchDto,
+} from '../../../libs/utils/src/dto/search.dto';
+import { FilterQuery, PipelineStage } from 'mongoose';
 
 @Controller('talent')
 export class TalentController {
@@ -27,5 +36,37 @@ export class TalentController {
   ) {
     talent.account = account;
     return this.talentService.create(talent);
+  }
+
+  @Get('landing-page')
+  landingPage(
+    @Query(new ObjectValidationPipe(landingPageSearchValidator))
+    { page, limit, ...query }: LandingPagePaginatedSearchDto,
+  ) {
+    const filter: FilterQuery<Talent> = {};
+    if ('id' in query) filter._id = query.id;
+    return this.talentService.paginatedResult({ page, limit }, filter, {});
+  }
+
+  @Get('search')
+  SearchTalent(
+    @Query(new ObjectValidationPipe(keywordSearchValidator))
+    { keyword, ...paginate }: KeywordPaginatedSearchDto,
+  ) {
+    const escapedText = keyword.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
+    const pipeline: PipelineStage[] = [
+      {
+        $match: {
+          $or: [
+            { description: { $regex: escapedText, $options: 'i' } },
+            { name: { $regex: escapedText, $options: 'i' } },
+          ],
+        },
+      },
+    ];
+
+    return this.talentService.aggregatePagination(paginate, pipeline, {
+      createdAt: -1,
+    });
   }
 }

@@ -26,9 +26,15 @@ import {
 } from '../validator/job.validator';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
 import { arrayValidator } from '../../../libs/utils/src/validator/custom.validator';
-import { PipelineStage, Types } from 'mongoose';
-import { KeywordPaginatedSearchDto } from '../../../libs/utils/src/dto/search.dto';
-import { keywordSearchValidator } from '../../../libs/utils/src/validator/search.validator';
+import { FilterQuery, PipelineStage, Types } from 'mongoose';
+import {
+  KeywordPaginatedSearchDto,
+  LandingPagePaginatedSearchDto,
+} from '../../../libs/utils/src/dto/search.dto';
+import {
+  keywordSearchValidator,
+  landingPageSearchValidator,
+} from '../../../libs/utils/src/validator/search.validator';
 
 @Controller('job')
 export class JobController {
@@ -98,6 +104,26 @@ export class JobController {
 
   @Get('landing-page')
   landingPageSearchJobs(
+    @Query(new ObjectValidationPipe(landingPageSearchValidator))
+    { page, limit, ...query }: LandingPagePaginatedSearchDto,
+  ) {
+    const filter: FilterQuery<Job> = {};
+
+    if ('id' in query) filter._id = new Types.ObjectId(query.id);
+
+    const pipeline: PipelineStage[] = [
+      {
+        $match: filter,
+      },
+    ];
+
+    return this.jobService.aggregatePagination({ page, limit }, pipeline, {
+      createdAt: -1,
+    });
+  }
+
+  @Get('search')
+  SearchJobs(
     @Query(new ObjectValidationPipe(keywordSearchValidator))
     { keyword, ...paginate }: KeywordPaginatedSearchDto,
   ) {

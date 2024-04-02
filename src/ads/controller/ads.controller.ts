@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { AdsService } from '../service/ads.service';
 import { Ads, AdsDocument } from '../model/ads.model';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
@@ -42,6 +50,7 @@ export class AdsController {
     { page, limit, ...query }: SearchAdsDto,
   ) {
     const filter: FilterQuery<Ads> = {};
+    if ('id' in query) filter._id = query.id;
     if ('condition' in query) filter.condition = query.condition;
     if ('location' in query) filter.store.location = query.location;
     if ('negotiable' in query) filter.negotiable = query.negotiable;
@@ -89,16 +98,16 @@ export class AdsController {
     return ads;
   }
 
-  @Get()
-  autocomplete(@Body() ads: Ads) {
-    return this.adsService.create(ads);
-  }
-
   @Get('distinct-properties')
   distinct(
     @Query(new ObjectValidationPipe(distinctAdsPropValidator))
     { distinct, ...filter }: DistinctFilterDto,
   ) {
     return this.adsService.model.distinct(distinct, filter);
+  }
+
+  @Get('/:id')
+  getAd(@Param('id') id: string) {
+    return this.adsService.findOne({ _id: id });
   }
 }
