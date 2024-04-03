@@ -19,7 +19,7 @@ import {
 } from '../validator/ads.validator';
 import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
 import { WishListService } from '../../wish-list/service/wish-list.service';
-import { FilterQuery, PipelineStage } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 
 @Controller('ads')
 export class AdsController {
