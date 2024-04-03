@@ -18,7 +18,6 @@ import {
   Document,
   Types,
 } from 'mongoose';
-import { PaginationResponseDto } from '@app/utils/dto/paginate.dto';
 import { DateTime } from 'luxon';
 
 @Injectable()
@@ -68,11 +67,11 @@ export abstract class BaseService<C> {
     );
   }
   async paginatedResult<T>(
-    paginateData: Partial<PaginationDto>,
+    paginateData: PaginationDto,
     filter: FilterQuery<C>,
     sort?: string | { [key: string]: SortOrder },
     population?: Array<PopulateOptions> | any,
-  ): Promise<PaginationResponseDto<T>> {
+  ) {
     const { limit, page } = paginateData;
     const [foundItems, count] = await Promise.all([
       this.model
@@ -84,17 +83,7 @@ export abstract class BaseService<C> {
       this.model.countDocuments(filter),
     ]);
 
-    const totalPages = Math.ceil(count / limit);
-
-    const nextPage =
-      count > limit ? (page < totalPages ? page + 1 : null) : null;
-    return {
-      limit,
-      nextPage,
-      currentPage: page,
-      totalNumberOfItems: count,
-      foundItems,
-    };
+    return this.paginateResponse(paginateData, foundItems, count);
   }
 
   dateFormatter(date: Date) {
@@ -583,7 +572,55 @@ export abstract class BaseService<C> {
       ]),
     ]);
 
-    const count = countData?.count ?? 0;
+    return this.paginateResponse(pg, foundItems, countData.count);
+  };
+
+  async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
+    const data = await this.model.findOne(filter);
+    if (data) return data;
+    return this.model.create(createData || {});
+  }
+
+  async atlasSearch<T = any>(
+    pg: PaginationDto,
+    text: string,
+    path: string[],
+    sort?: Record<string, 1 | -1>,
+  ) {
+    const escapedText = text.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
+    const search: PipelineStage = {
+      $search: {
+        text: {
+          query: escapedText,
+          path,
+          fuzzy: {
+            maxEdits: 2,
+          },
+        },
+        count: {
+          type: 'total',
+        },
+      },
+    };
+    const [foundItems, [countData]] = await Promise.all([
+      this.model.aggregate<T>([
+        search,
+        { $limit: pg.limit },
+        { $skip: (pg.page - 1) * pg.limit },
+        { $sort: sort ?? { createdAt: -1 } },
+      ]),
+      this.model.aggregate<{ count: number }>([search, { $count: 'count' }]),
+    ]);
+
+    return this.paginateResponse<T>(pg, foundItems, countData.count);
+  }
+
+  private paginateResponse<T>(
+    pg: PaginationDto,
+    foundItems: T[],
+    itemCount: number,
+  ) {
+    const count = itemCount ?? 0;
     const totalPages = Math.ceil(count / pg.limit);
     const nextPage = pg.page + 1 > totalPages ? null : pg.page + 1;
     return {
@@ -594,31 +631,5 @@ export abstract class BaseService<C> {
       currentPage: pg.page,
       foundItems,
     };
-  };
-
-  async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
-    const data = await this.model.findOne(filter);
-    if (data) return data;
-    return this.model.create(createData || {});
-  }
-
-  atlasSearch<T = any>(text: string, path: string[]) {
-    const escapedText = text.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
-    return this.model.aggregate<T>([
-      {
-        $search: {
-          text: {
-            query: escapedText,
-            path,
-            fuzzy: {
-              maxEdits: 2,
-            },
-          },
-          count: {
-            type: 'total',
-          },
-        },
-      },
-    ]);
   }
 }

@@ -19,7 +19,7 @@ import {
 } from '../validator/ads.validator';
 import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
 import { WishListService } from '../../wish-list/service/wish-list.service';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, PipelineStage } from 'mongoose';
 
 @Controller('ads')
 export class AdsController {
@@ -79,19 +79,19 @@ export class AdsController {
   @Get('search')
   async searchAds(
     @Query(new ObjectValidationPipe(searchAdsValidator))
-    { keyword, account }: SearchAdsDto,
+    { keyword, account, page, limit }: SearchAdsDto,
   ) {
     const path = ['title', 'description', 'brandName', 'store'];
     const key = keyword || ' ';
 
     const [ads, wishList] = await Promise.all([
-      this.adsService.atlasSearch<AdsDocument>(key, path),
+      this.adsService.atlasSearch<AdsDocument>({ page, limit }, key, path),
       this.wishList.findOne({ account }),
     ]);
 
     if (!(account && wishList?.wishList[0])) return ads;
 
-    for (const ad of ads) {
+    for (const ad of ads.foundItems) {
       ad.wish = wishList.wishList.includes(ad._id);
     }
 
