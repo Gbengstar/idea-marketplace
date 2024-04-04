@@ -19,7 +19,7 @@ export class FileUploadService {
   }
 
   async fileUpload(file: Express.Multer.File, user: string) {
-    const Key = new Types.ObjectId().toString() + '/' + user;
+    const Key = user + '/' + new Types.ObjectId().toString();
     const input = {
       Body: file.buffer,
       Bucket: this.bucket,
@@ -35,7 +35,7 @@ export class FileUploadService {
   }
 
   async fileUploadMany(files: Express.Multer.File[], user: string) {
-    const output = [];
+    const output: { location: string; fileName: string }[] = [];
     for await (const file of files) {
       const uploadedFile = await this.fileUpload(file, user);
       output.push(uploadedFile);
