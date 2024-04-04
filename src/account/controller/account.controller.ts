@@ -54,4 +54,17 @@ export class AccountController {
     this.logger.debug(files);
     return this.fileUploadService.fileUploadMany(files, id);
   }
+
+  @Post('open-files-upload')
+  @UseInterceptors(
+    FilesInterceptor('file[]', 6, {
+      limits: { fieldSize: 6, fileSize: 5000000 },
+    }),
+  )
+  async freeFileUpload(
+    @Body(new ObjectValidationPipe(updateAccountDetails)) account: Account,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.fileUploadService.fileUploadMany(files, 'assets');
+  }
 }

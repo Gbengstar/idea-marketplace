@@ -91,6 +91,10 @@ export class AppModule implements NestModule {
           path: '/api/v1/auth/vendor/google-login',
           method: RequestMethod.POST,
         },
+        {
+          path: '/api/v1/account/open-files-upload',
+          method: RequestMethod.POST,
+        },
         { path: '/api/v1/promotion', method: RequestMethod.GET },
         { path: '/api/v1/ads/landing-page', method: RequestMethod.GET },
         { path: '/api/v1/ads/search', method: RequestMethod.GET },

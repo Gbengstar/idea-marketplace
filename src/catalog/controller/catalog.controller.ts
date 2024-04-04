@@ -1,5 +1,6 @@
 import { SubCategoryService } from './../service/sub-category.service';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,6 +9,8 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CategoryService } from '../service/category.service';
 import { Category } from '../model/category.model';
@@ -19,6 +22,8 @@ import {
 } from '../../../libs/utils/src/validator/custom.validator';
 import { SubCategory } from '../model/sub-category.model';
 import { IDDto, IDsDto } from '../../../libs/utils/src/dto/id.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadService } from '../../../libs/utils/src/file-upload/service/file-upload.service';
 
 @Controller('catalog')
 export class CatalogController {
@@ -26,10 +31,28 @@ export class CatalogController {
   constructor(
     private readonly categoryService: CategoryService,
     private readonly subCategoryService: SubCategoryService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   @Post('category')
-  createCategory(@Body() category: Category) {
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5000000 },
+    }),
+  )
+  async createCategory(
+    @Body() category: Category,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const upload = await this.fileUploadService.fileUploadMany(
+      [file],
+      'assets',
+    );
+
+    if (!upload[0])
+      throw new BadRequestException('please upload an icon for category');
+    category.icon = upload[0].location;
+
     return this.categoryService.create(category);
   }
 
