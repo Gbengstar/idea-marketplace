@@ -54,6 +54,7 @@ export class StoreController {
     { keyword, ...paginate }: KeywordPaginatedSearchDto,
   ) {
     const escapedText = keyword.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
+    this.logger.log({ escapedText });
     const pipeline: PipelineStage[] = [
       {
         $match: {
