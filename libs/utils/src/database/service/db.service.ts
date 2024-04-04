@@ -572,7 +572,7 @@ export abstract class BaseService<C> {
       ]),
     ]);
 
-    return this.paginateResponse(pg, foundItems, countData.count);
+    return this.paginateResponse(pg, foundItems, countData?.count ?? 0);
   };
 
   async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
@@ -612,7 +612,7 @@ export abstract class BaseService<C> {
       this.model.aggregate<{ count: number }>([search, { $count: 'count' }]),
     ]);
 
-    return this.paginateResponse<T>(pg, foundItems, countData.count);
+    return this.paginateResponse(pg, foundItems, countData?.count ?? 0);
   }
 
   private paginateResponse<T>(
