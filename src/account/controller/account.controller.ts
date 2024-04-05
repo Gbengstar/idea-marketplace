@@ -36,8 +36,7 @@ export class AccountController {
     @Body(new ObjectValidationPipe(updateAccountDetails)) account: Account,
     @TokenDecorator() { id }: TokenDataDto,
   ) {
-    await this.accountService.updateByIdErrorOut(id, account);
-    return { message: 'profile updated' };
+    return this.accountService.updateByIdErrorOut(id, account);
   }
 
   @Post('upload-files')
