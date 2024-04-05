@@ -23,6 +23,7 @@ import { WishListModule } from './wish-list/wish-list.module';
 import { PromotionModule } from './promotion/promotion.module';
 import { JobModule } from './job/job.module';
 import { TalentModule } from './talent/talent.module';
+import { ViewModule } from './view/view.module';
 
 @Module({
   imports: [
@@ -60,6 +61,8 @@ import { TalentModule } from './talent/talent.module';
     JobModule,
 
     TalentModule,
+
+    ViewModule,
   ],
   controllers: [AppController],
 })
