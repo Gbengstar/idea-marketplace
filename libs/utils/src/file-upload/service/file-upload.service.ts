@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { Types } from 'mongoose';
 
 @Injectable()
 export class FileUploadService {
@@ -15,15 +14,18 @@ export class FileUploadService {
 
   constructor(private readonly configService: ConfigService) {
     this.bucket = this.configService.getOrThrow('AWS_S3_BUCKET');
-    this.s3Prefix = `https://${this.bucket}.s3.amazonaws.com`;
+    this.s3Prefix = `https://s3.amazonaws.com/${this.bucket}`;
   }
 
   async fileUpload(file: Express.Multer.File, user: string) {
-    const Key = user + '/' + new Types.ObjectId().toString();
+    const name = file.originalname.trim().replace(/\s+/g, '-');
+    const Key = user + '/' + name;
     const input = {
       Body: file.buffer,
       Bucket: this.bucket,
       Key,
+      ContentType: 'image/jpeg',
+      ContentDisposition: 'inline',
     };
     const command = new PutObjectCommand(input);
     await this.s3.send(command);
