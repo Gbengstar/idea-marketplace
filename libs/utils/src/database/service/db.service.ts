@@ -70,7 +70,7 @@ export abstract class BaseService<C> {
     paginateData: PaginationDto,
     filter: FilterQuery<C>,
     sort?: string | { [key: string]: SortOrder },
-    population?: Array<PopulateOptions> | any,
+    population?: Array<PopulateOptions>,
   ) {
     const { limit, page } = paginateData;
     const [foundItems, count] = await Promise.all([

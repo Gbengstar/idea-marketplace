@@ -27,7 +27,7 @@ export class AdsController {
 
   constructor(
     private readonly adsService: AdsService,
-    private readonly wishList: WishListService,
+    private readonly wishListService: WishListService,
   ) {}
 
   @Post()
@@ -62,15 +62,15 @@ export class AdsController {
         { limit, page },
         filter,
         {},
-        'store category subCategory',
+        [{ path: 'store category subCategory' }],
       ),
-      this.wishList.findOne({ account: query.account }),
+      this.wishListService.wishListIds({ account: query.account, ref: 'ads' }),
     ]);
 
-    if (!(query.account && wishList?.wishList[0])) return ads;
+    if (!(query.account && wishList[0])) return ads;
 
     for (const ad of ads.foundItems) {
-      ad.wish = wishList.wishList.includes(ad._id);
+      ad.wish = wishList.includes(ad._id.toString());
     }
 
     return ads;
@@ -86,13 +86,13 @@ export class AdsController {
 
     const [ads, wishList] = await Promise.all([
       this.adsService.atlasSearch<AdsDocument>({ page, limit }, key, path),
-      this.wishList.findOne({ account }),
+      this.wishListService.wishListIds({ account, ref: 'ads' }),
     ]);
 
-    if (!(account && wishList?.wishList[0])) return ads;
+    if (!(account && wishList[0])) return ads;
 
     for (const ad of ads.foundItems) {
-      ad.wish = wishList.wishList.includes(ad._id);
+      ad.wish = wishList.includes(ad._id.toString());
     }
 
     return ads;
