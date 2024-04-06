@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
   Post,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -43,6 +44,7 @@ import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.de
 import { emailValidator } from '../../../libs/utils/src/validator/custom.validator';
 import { returnOnDev } from '../../../libs/utils/src/general/function/general.function';
 import { GoogleOauthService } from '../../../libs/utils/src/google-oauth/service/google-oauth.service';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -197,6 +199,7 @@ export class AuthController {
   async localLogin(
     @Body(new ObjectValidationPipe(localLoginValidator))
     { email, password }: LocalLoginDto,
+    @Res() response: Response,
   ) {
     const account = await this.accountService.findOneOrErrorOut({ email });
 
@@ -215,7 +218,6 @@ export class AuthController {
         'please verify your account and update your password',
       );
     }
-    this.logger.debug({ account });
 
     const correctPassword = await verifyHash(account.password, password);
     if (!correctPassword) {
@@ -232,7 +234,9 @@ export class AuthController {
 
     const accessToken = await this.tokenService.signToken(tokenData);
 
-    return { accessToken, account };
+    response.cookie('token', accessToken, { signed: true, httpOnly: true });
+
+    return response.json({ status: 'SUCCESS', data: { accessToken, account } });
   }
 
   @Post('vendor/google-login')

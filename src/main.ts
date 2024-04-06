@@ -8,6 +8,7 @@ import { TokenMiddlewareGuard } from '../libs/utils/src/token/guard/token.guard'
 import * as express from 'express';
 import { GlobalResponseInterceptor } from '../libs/utils/src/interceptor/global.interceptor';
 import { Logger } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,6 +27,8 @@ async function bootstrap() {
 
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new TokenMiddlewareGuard(reflector));
+
+  app.use(cookieParser(configService.get<string>(EnvConfigEnum.TOKEN_SECRET)));
 
   /**To support payload with large size */
   app.use(express.json({ limit: '100mb' }));
