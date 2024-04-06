@@ -11,6 +11,7 @@ import { PopulateOptions, Types } from 'mongoose';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
 import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
+import { Ads } from '../../ads/model/ads.model';
 
 @Controller('wish-list')
 export class WishListController {
@@ -38,7 +39,15 @@ export class WishListController {
     const filter = { account: new Types.ObjectId(id), ref: 'ads' };
 
     const populate: PopulateOptions[] = [
-      { path: 'wish', model: 'Ads', populate: { path: 'store' } },
+      {
+        path: 'wish',
+        model: 'Ads',
+        transform: (doc: Ads) => {
+          doc.wish = true;
+          return doc;
+        },
+        populate: { path: 'store' },
+      },
     ];
 
     return this.wishListService.paginatedResult(
