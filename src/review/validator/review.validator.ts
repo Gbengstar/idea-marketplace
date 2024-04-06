@@ -3,16 +3,26 @@ import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.va
 import { Review } from '../model/review.model';
 import * as Joi from 'joi';
 import { ReviewRatingEnum } from '../enum/review.enum';
+import { GetItemReviewsDto, ReplyReviewsDto } from '../dto/review.dto';
 
 export const createReviewValidator = Joi.object<Review>({
   item: objectIdValidator.required(),
-  comment: Joi.array().items(Joi.string()).required().max(1),
+  comment: Joi.string().required(),
   rating: Joi.number()
     .valid(...Object.values(ReviewRatingEnum))
     .required(),
 });
 
-export const searchReviewValidator = paginationValidator.append<Review>({
-  item: objectIdValidator,
-  comment: Joi.array().items(Joi.string()),
+export const replyReviewValidator = Joi.object<ReplyReviewsDto>({
+  id: objectIdValidator.required(),
+  comment: Joi.string().required(),
 });
+
+export const searchReviewValidator =
+  paginationValidator.append<GetItemReviewsDto>({
+    id: objectIdValidator,
+    item: objectIdValidator,
+    rating: Joi.number().valid(...Object.values(ReviewRatingEnum)),
+    account: objectIdValidator,
+    reviewer: objectIdValidator,
+  });

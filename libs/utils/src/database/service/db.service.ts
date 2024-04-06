@@ -86,6 +86,26 @@ export abstract class BaseService<C> {
     return this.paginateResponse(paginateData, foundItems, count);
   }
 
+  async paginatedResultAverage<T>(
+    paginateData: PaginationDto,
+    filter: FilterQuery<C>,
+    averageField: string,
+    sort?: string | { [key: string]: SortOrder },
+    population?: Array<PopulateOptions>,
+  ) {
+    const [paginateResponse, [average]] = await Promise.all([
+      this.paginatedResult<T>(paginateData, filter, sort, population),
+      this.model.aggregate<{ average: number }>([
+        { $match: filter },
+        { $group: { _id: null, average: { $avg: `$${averageField}` } } },
+      ]),
+    ]);
+
+    paginateResponse[`average${averageField}`] =
+      +average?.average.toFixed(2) ?? 0;
+    return paginateResponse;
+  }
+
   dateFormatter(date: Date) {
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -581,30 +601,32 @@ export abstract class BaseService<C> {
     sumField: string,
     sort?: Record<string, 1 | -1>,
   ) => {
-    const [foundItems, [countData], [sum]] = await Promise.all([
-      this.model.aggregate<C>([
-        ...aggregate,
-        { $limit: pg.limit },
-        { $skip: (pg.page - 1) * pg.limit },
-        { $sort: sort ?? { createdAt: -1 } },
-      ]),
-      this.model.aggregate<{ count: number }>([
-        ...aggregate,
-        { $count: 'count' },
-      ]),
-
+    const [pageData, [sum]] = await Promise.all([
+      this.aggregatePagination(pg, aggregate, sort),
       this.model.aggregate<{ sum: number }>([
         ...aggregate,
         { $group: { _id: null, sum: { $sum: `$${sumField}` } } },
       ]),
     ]);
-
-    const pageData = this.paginateResponse(
-      pg,
-      foundItems,
-      countData?.count ?? 0,
-    );
     return { sum: sum?.sum ?? 0, ...pageData };
+  };
+
+  aggregatePaginationAverage = async (
+    pg: PaginationDto,
+    aggregate: PipelineStage[],
+    averageField: string,
+    sort?: Record<string, 1 | -1>,
+  ) => {
+    const [pageData, [average]] = await Promise.all([
+      this.aggregatePagination(pg, aggregate, sort),
+      this.model.aggregate<{ average: number }>([
+        ...aggregate,
+        { $group: { _id: null, average: { $avg: `$${averageField}` } } },
+      ]),
+    ]);
+
+    pageData[`average${averageField}`] = average?.average ?? 0;
+    return pageData;
   };
 
   async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
