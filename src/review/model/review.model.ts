@@ -1,19 +1,24 @@
+import { SchemaTypes } from 'mongoose';
+import { ReviewRatingEnum } from '../enum/review.enum';
 import { dbSchemaOptions } from './../../../libs/utils/src/database/config/db.config';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema(dbSchemaOptions)
 export class Review {
-  @Prop()
-  ads: string;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Account' })
+  account: string;
 
   @Prop()
-  comment: string;
+  item: string;
 
-  @Prop()
-  reply: string;
+  @Prop({ type: Number })
+  rating: ReviewRatingEnum;
 
-  @Prop()
-  rating: number;
+  @Prop([String])
+  comment: string[];
+
+  @Prop([String])
+  reply: string[];
 }
 
 export const ReviewSchema = SchemaFactory.createForClass(Review);

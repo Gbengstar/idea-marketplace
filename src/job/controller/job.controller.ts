@@ -115,6 +115,14 @@ export class JobController {
       {
         $match: filter,
       },
+      {
+        $lookup: {
+          from: 'profiles',
+          foreignField: '_id',
+          localField: 'profile',
+          as: 'profile',
+        },
+      },
     ];
 
     return this.jobService.aggregatePagination({ page, limit }, pipeline, {
