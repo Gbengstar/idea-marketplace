@@ -7,7 +7,7 @@ import {
 import { stringValidator } from '../../../libs/utils/src/validator/custom.validator';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { PipelineStage, Types } from 'mongoose';
+import { PipelineStage, PopulateOptions, Types } from 'mongoose';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
 import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
@@ -35,28 +35,36 @@ export class WishListController {
     @Query(new ObjectValidationPipe(paginationValidator))
     paginate: PaginationDto,
   ) {
-    const pipeline: PipelineStage[] = [
-      { $match: { account: new Types.ObjectId(id), ref: 'ads' } },
-      {
-        $lookup: {
-          from: 'ads',
-          foreignField: '_id',
-          as: 'ads',
-          localField: 'wish',
-          pipeline: [
-            {
-              $lookup: {
-                from: 'stores',
-                foreignField: '_id',
-                as: 'store',
-                localField: 'store',
-              },
-            },
-          ],
-        },
-      },
+    const filter = { account: new Types.ObjectId(id), ref: 'ads' };
+
+    const populate: PopulateOptions[] = [
+      { path: 'wish', model: 'Ads', populate: { path: 'store' } },
     ];
-    return this.wishListService.aggregatePagination(paginate, pipeline);
+
+    return this.wishListService.paginatedResult(paginate, filter, {}, populate);
+
+    // const pipeline: PipelineStage[] = [
+    //   { $match: { account: new Types.ObjectId(id), ref: 'ads' } },
+    //   {
+    //     $lookup: {
+    //       from: 'ads',
+    //       foreignField: '_id',
+    //       as: 'ads',
+    //       localField: 'wish',
+    //       pipeline: [
+    //         {
+    //           $lookup: {
+    //             from: 'stores',
+    //             foreignField: '_id',
+    //             as: 'store',
+    //             localField: 'store',
+    //           },
+    //         },
+    //       ],
+    //     },
+    //   },
+    // ];
+    // return this.wishListService.aggregatePagination(paginate, pipeline);
   }
 
   @Delete('ads')
