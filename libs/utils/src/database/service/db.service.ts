@@ -575,6 +575,38 @@ export abstract class BaseService<C> {
     return this.paginateResponse(pg, foundItems, countData?.count ?? 0);
   };
 
+  aggregatePaginationSum = async (
+    pg: PaginationDto,
+    aggregate: PipelineStage[],
+    sumField: string,
+    sort?: Record<string, 1 | -1>,
+  ) => {
+    const [foundItems, [countData], [sum]] = await Promise.all([
+      this.model.aggregate<C>([
+        ...aggregate,
+        { $limit: pg.limit },
+        { $skip: (pg.page - 1) * pg.limit },
+        { $sort: sort ?? { createdAt: -1 } },
+      ]),
+      this.model.aggregate<{ count: number }>([
+        ...aggregate,
+        { $count: 'count' },
+      ]),
+
+      this.model.aggregate<{ sum: number }>([
+        ...aggregate,
+        { $group: { _id: null, sum: { $sum: `$${sumField}` } } },
+      ]),
+    ]);
+
+    const pageData = this.paginateResponse(
+      pg,
+      foundItems,
+      countData?.count ?? 0,
+    );
+    return { sum: sum?.sum ?? 0, ...pageData };
+  };
+
   async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
     const data = await this.model.findOne(filter);
     if (data) return data;
