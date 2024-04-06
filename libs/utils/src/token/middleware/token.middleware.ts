@@ -26,7 +26,7 @@ export class TokenMiddleware implements NestMiddleware {
       next();
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException();
+      throw new BadGatewayException(error.message);
     }
   }
 }
