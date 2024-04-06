@@ -8,17 +8,20 @@ export class Review {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Account' })
   account: string;
 
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Account' })
+  reviewer: string;
+
   @Prop()
   item: string;
 
   @Prop({ type: Number })
   rating: ReviewRatingEnum;
 
-  @Prop([String])
-  comment: string[];
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Comment' })
+  comment: string;
 
-  @Prop([String])
-  reply: string[];
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Comment' })
+  reply: string;
 }
 
 export const ReviewSchema = SchemaFactory.createForClass(Review);

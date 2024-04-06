@@ -3,13 +3,19 @@ import { ReviewService } from './service/review.service';
 import { ReviewController } from './controller/review.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Review, ReviewSchema } from './model/review.model';
+import { Comment, CommentSchema } from './model/comment.model';
+import { CommentService } from './service/comment.service';
+import { AdsService } from '../ads/service/ads.service';
+import { Ads, AdsSchema } from '../ads/model/ads.model';
 
 @Module({
   controllers: [ReviewController],
-  providers: [ReviewService],
+  providers: [ReviewService, CommentService, AdsService],
   imports: [
     MongooseModule.forFeatureAsync([
       { name: Review.name, useFactory: () => ReviewSchema },
+      { name: Comment.name, useFactory: () => CommentSchema },
+      { name: Ads.name, useFactory: () => AdsSchema },
     ]),
   ],
 })
