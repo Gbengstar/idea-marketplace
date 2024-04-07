@@ -46,6 +46,7 @@ export class AdsController {
 
   @Get('landing-page')
   async landingPageAds(
+    @TokenDecorator() token: TokenDataDto,
     @Query(new ObjectValidationPipe(searchAdsValidator))
     { page, limit, ...query }: SearchAdsDto,
   ) {
@@ -64,10 +65,10 @@ export class AdsController {
         {},
         [{ path: 'store category subCategory' }],
       ),
-      this.wishListService.wishListIds({ account: query.account, ref: 'ads' }),
+      this.wishListService.wishListIds({ account: token?.id, ref: 'ads' }),
     ]);
 
-    if (!(query.account && wishList[0])) return ads;
+    if (!(token && wishList[0])) return ads;
 
     for (const ad of ads.foundItems) {
       ad.wish = wishList.includes(ad._id.toString());

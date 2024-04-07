@@ -24,6 +24,7 @@ import { PromotionModule } from './promotion/promotion.module';
 import { JobModule } from './job/job.module';
 import { TalentModule } from './talent/talent.module';
 import { ViewModule } from './view/view.module';
+import { OptionalTokenMiddleware } from '../libs/utils/src/token/middleware/optional-token.middleware';
 
 @Module({
   imports: [
@@ -68,6 +69,8 @@ import { ViewModule } from './view/view.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // RequestLoggerMiddleware;
+
     consumer
       .apply(RequestLoggerMiddleware)
       .exclude({ path: '/api/v1', method: RequestMethod.GET })
@@ -75,6 +78,18 @@ export class AppModule implements NestModule {
         path: '*',
         method: RequestMethod.ALL,
       });
+
+    //  OptionalTokenMiddleware
+
+    consumer
+      .apply(OptionalTokenMiddleware)
+      .forRoutes(
+        { path: '/ads/landing-page', method: RequestMethod.GET },
+        { path: '/ads/search', method: RequestMethod.GET },
+      );
+
+    // TokenMiddleware;
+
     consumer
       .apply(TokenMiddleware)
       .exclude(
