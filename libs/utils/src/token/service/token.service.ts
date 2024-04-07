@@ -113,9 +113,6 @@ export class TokenService {
     } else if (req.signedCookies?.token) {
       token = req.signedCookies?.token;
     }
-    if (!token) {
-      throw new BadRequestException('please provide a valid token');
-    }
     return token;
   };
 }
