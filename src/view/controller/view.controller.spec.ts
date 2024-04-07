@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ViewController } from './view.controller';
-import { ViewService } from './view.service';
+import { ViewService } from '../view.service';
 
 describe('ViewController', () => {
   let controller: ViewController;

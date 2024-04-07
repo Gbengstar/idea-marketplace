@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { WishListService } from '../service/wish-list.service';
 import {
   ObjectValidationPipe,
@@ -15,6 +23,8 @@ import { Ads } from '../../ads/model/ads.model';
 
 @Controller('wish-list')
 export class WishListController {
+  private readonly logger = new Logger(WishListController.name);
+
   constructor(private readonly wishListService: WishListService) {}
 
   @Post('ads')
@@ -23,6 +33,10 @@ export class WishListController {
     ads: string,
     @TokenDecorator() { id }: TokenDataDto,
   ) {
+    const wish = await this.wishListService.findOne({ account: id, wish: ads });
+
+    if (wish) return wish;
+
     return this.wishListService.create({
       account: id,
       ref: 'ads',
@@ -64,6 +78,6 @@ export class WishListController {
     id: string,
     @TokenDecorator() { id: account }: TokenDataDto,
   ) {
-    return this.wishListService.model.deleteOne({ account, _id: id });
+    return this.wishListService.model.deleteOne({ account, wish: id });
   }
 }

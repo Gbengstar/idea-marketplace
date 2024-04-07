@@ -78,7 +78,7 @@ export abstract class BaseService<C> {
         .find<T>(filter)
         .skip((page - 1) * limit)
         .sort(sort ?? { createdAt: -1 })
-        .limit(limit + 2)
+        .limit(limit)
         .populate(population),
       this.model.countDocuments(filter),
     ]);

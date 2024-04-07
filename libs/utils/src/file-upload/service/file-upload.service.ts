@@ -24,7 +24,7 @@ export class FileUploadService {
       Body: file.buffer,
       Bucket: this.bucket,
       Key,
-      ContentType: 'image/jpeg',
+      ContentType: file.mimetype,
       ContentDisposition: 'inline',
     };
     const command = new PutObjectCommand(input);
