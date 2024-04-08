@@ -1,5 +1,4 @@
 import {
-  BadGatewayException,
   BadRequestException,
   Injectable,
   Logger,
@@ -29,7 +28,7 @@ export class OptionalTokenMiddleware implements NestMiddleware {
       next();
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException(error.message);
+      next();
     }
   }
 }
