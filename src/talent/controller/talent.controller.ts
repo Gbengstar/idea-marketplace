@@ -15,6 +15,7 @@ import {
   LandingPagePaginatedSearchDto,
 } from '../../../libs/utils/src/dto/search.dto';
 import { FilterQuery, PipelineStage } from 'mongoose';
+import { createTalentValidator } from '../validator/talent.validator';
 
 @Controller('talent')
 export class TalentController {
@@ -32,7 +33,7 @@ export class TalentController {
   @Post()
   createTalent(
     @TokenDecorator() { id: account }: TokenDataDto,
-    @Body() talent: Talent,
+    @Body(new ObjectValidationPipe(createTalentValidator)) talent: Talent,
   ) {
     talent.account = account;
     return this.talentService.create(talent);
