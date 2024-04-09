@@ -20,6 +20,7 @@ import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.va
 import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
 import { Ads } from '../../ads/model/ads.model';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 
 @Controller('wish-list')
 export class WishListController {
@@ -39,7 +40,7 @@ export class WishListController {
 
     return this.wishListService.create({
       account: id,
-      ref: 'ads',
+      ref: ResourceEnum.Ads,
       wish: new Types.ObjectId(ads),
     });
   }

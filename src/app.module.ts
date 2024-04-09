@@ -25,6 +25,7 @@ import { JobModule } from './job/job.module';
 import { TalentModule } from './talent/talent.module';
 import { ViewModule } from './view/view.module';
 import { OptionalTokenMiddleware } from '../libs/utils/src/token/middleware/optional-token.middleware';
+import { RevealModule } from './reveal/reveal.module';
 
 @Module({
   imports: [
@@ -64,6 +65,8 @@ import { OptionalTokenMiddleware } from '../libs/utils/src/token/middleware/opti
     TalentModule,
 
     ViewModule,
+
+    RevealModule,
   ],
   controllers: [AppController],
 })
@@ -124,6 +127,7 @@ export class AppModule implements NestModule {
         { path: '/api/v1/talent/search', method: RequestMethod.GET },
         { path: '/api/v1/catalog/category', method: RequestMethod.GET },
         { path: '/api/v1/catalog/sub-category', method: RequestMethod.GET },
+        { path: '/api/v1/review', method: RequestMethod.GET },
       )
       .forRoutes({
         path: '*',

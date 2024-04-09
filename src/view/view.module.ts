@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ViewService } from './view.service';
+import { ViewService } from './service/view.service';
 import { ViewController } from './controller/view.controller';
 
 @Module({
