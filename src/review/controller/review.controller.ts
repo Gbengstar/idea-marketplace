@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Logger,
+  NotAcceptableException,
   Post,
   Query,
 } from '@nestjs/common';
@@ -21,6 +22,7 @@ import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { AdsService } from '../../ads/service/ads.service';
 import { CommentService } from '../service/comment.service';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 
 @Controller('review')
 export class ReviewController {
@@ -32,18 +34,33 @@ export class ReviewController {
     private readonly commentService: CommentService,
   ) {}
 
-  @Post('ads')
+  @Post()
   async createReview(
     @TokenDecorator() { id }: TokenDataDto,
     @Body(new ObjectValidationPipe(createReviewValidator)) review: Review,
   ) {
-    const ads = await this.adsService.findByIdOrErrorOut(review.item);
+    let accountItem;
 
-    if (ads.account.toString() === id) {
+    switch (review.ref) {
+      case ResourceEnum.Ads: {
+        accountItem = await this.adsService.findByIdOrErrorOut(review.item);
+        break;
+      }
+
+      case ResourceEnum.Talent: {
+        accountItem = await this.adsService.findByIdOrErrorOut(review.item);
+        break;
+      }
+
+      default:
+        throw new NotAcceptableException('item not found');
+    }
+
+    if (accountItem.account.toString() === id) {
       throw new BadRequestException('you are not allowed to review your ads');
     }
 
-    this.logger.log({ account: ads.account, id });
+    this.logger.log({ account: accountItem.account, id });
 
     const comment = new this.commentService.model({
       account: id,
@@ -52,7 +69,7 @@ export class ReviewController {
     review.reviewer = id;
     review.comment = comment._id.toString();
 
-    review.account = ads.account;
+    review.account = accountItem.account;
     const [newReview] = await Promise.all([
       this.reviewService.create(review),
       comment.save(),
@@ -63,7 +80,7 @@ export class ReviewController {
     ]);
   }
 
-  @Post('ads/reply')
+  @Post('reply')
   async replyReview(
     @TokenDecorator() { id }: TokenDataDto,
     @Body(new ObjectValidationPipe(replyReviewValidator))

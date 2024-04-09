@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { ViewService } from '../view.service';
+import { ViewService } from '../service/view.service';
 
 @Controller('view')
 export class ViewController {
