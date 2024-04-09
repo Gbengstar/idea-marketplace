@@ -17,21 +17,16 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
 
+    if ('getStatus' in exception) status = exception?.getStatus();
+
     switch (exception.name) {
       case 'ValidationError': {
         status = HttpStatus.BAD_REQUEST;
 
         break;
       }
-
-      case HttpException.name:
-        {
-          status = exception?.getStatus();
-        }
-        break;
     }
 
-    this.logger.error(exception);
     this.logger.debug(exception?.stack);
 
     response.status(status).json({

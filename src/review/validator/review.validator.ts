@@ -4,6 +4,7 @@ import { Review } from '../model/review.model';
 import * as Joi from 'joi';
 import { ReviewRatingEnum } from '../enum/review.enum';
 import { GetItemReviewsDto, ReplyReviewsDto } from '../dto/review.dto';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 
 export const createReviewValidator = Joi.object<Review>({
   item: objectIdValidator.required(),
@@ -11,6 +12,10 @@ export const createReviewValidator = Joi.object<Review>({
   rating: Joi.number()
     .valid(...Object.values(ReviewRatingEnum))
     .required(),
+
+  ref: Joi.string()
+    .required()
+    .valid(...Object.values(ResourceEnum)),
 });
 
 export const replyReviewValidator = Joi.object<ReplyReviewsDto>({

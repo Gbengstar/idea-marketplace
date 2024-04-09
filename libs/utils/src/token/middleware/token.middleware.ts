@@ -16,8 +16,6 @@ export class TokenMiddleware implements NestMiddleware {
     try {
       const token = TokenService.getToken(req);
 
-      this.logger.log('TokenMiddleware');
-
       if (!token) {
         throw new BadRequestException('please provide a valid token');
       }
