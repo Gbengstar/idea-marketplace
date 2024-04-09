@@ -28,10 +28,8 @@ export class RevealService extends BaseService<RevealLog> {
       revealer: reveal.revealer,
     });
 
-    this.create(reveal)
-      .catch((createRevealEventLogError) =>
-        this.logger.error({ createRevealEventLogError }),
-      )
-      .then((revealLogData) => this.logger.log({ revealLogData }));
+    this.create(reveal).catch((createRevealEventLogError) =>
+      this.logger.error({ createRevealEventLogError }),
+    );
   }
 }

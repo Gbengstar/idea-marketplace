@@ -1,10 +1,10 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
   Logger,
   NotAcceptableException,
+  NotFoundException,
   Post,
   Query,
 } from '@nestjs/common';
@@ -23,6 +23,7 @@ import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.de
 import { AdsService } from '../../ads/service/ads.service';
 import { CommentService } from '../service/comment.service';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
+import { TalentService } from '../../talent/service/talent.service';
 
 @Controller('review')
 export class ReviewController {
@@ -31,6 +32,7 @@ export class ReviewController {
   constructor(
     private readonly reviewService: ReviewService,
     private readonly adsService: AdsService,
+    private readonly talentService: TalentService,
     private readonly commentService: CommentService,
   ) {}
 
@@ -48,19 +50,19 @@ export class ReviewController {
       }
 
       case ResourceEnum.Talent: {
-        accountItem = await this.adsService.findByIdOrErrorOut(review.item);
+        accountItem = await this.talentService.findByIdOrErrorOut(review.item);
         break;
       }
 
       default:
-        throw new NotAcceptableException('item not found');
+        throw new NotFoundException('item not found');
     }
 
     if (accountItem.account.toString() === id) {
-      throw new BadRequestException('you are not allowed to review your ads');
+      throw new NotAcceptableException(
+        `you are not allowed to review your ${review.ref}`,
+      );
     }
-
-    this.logger.log({ account: accountItem.account, id });
 
     const comment = new this.commentService.model({
       account: id,
@@ -74,10 +76,7 @@ export class ReviewController {
       this.reviewService.create(review),
       comment.save(),
     ]);
-    return newReview.populate([
-      { path: 'comment' },
-      { path: 'item', model: 'Ads' },
-    ]);
+    return newReview;
   }
 
   @Post('reply')
@@ -91,18 +90,18 @@ export class ReviewController {
       account: id,
       comment: reply.comment,
     });
+
     review.reply = comment._id.toString();
 
     if (review.account.toString() !== id) {
-      throw new BadRequestException('you can only reply to review of your ads');
+      throw new NotAcceptableException(
+        `you can only reply to review of your ${review.ref}`,
+      );
     }
 
     const [newReview] = await Promise.all([review.save(), comment.save()]);
 
-    return newReview.populate([
-      { path: 'comment reply' },
-      { path: 'item', model: 'Ads' },
-    ]);
+    return newReview.populate([{ path: 'comment reply' }, { path: 'item' }]);
   }
 
   @Get()
@@ -117,6 +116,8 @@ export class ReviewController {
     if ('account' in review)
       filter.account = new Types.ObjectId(review.account);
 
+    if ('rating' in review) filter.rating = review.rating;
+
     if ('item' in review) filter.item = new Types.ObjectId(review.item);
 
     if ('id' in review) filter._id = new Types.ObjectId(review.id);
@@ -126,7 +127,10 @@ export class ReviewController {
       filter,
       'rating',
       { createdAt: -1 },
-      [{ path: 'account reviewer comment reply' }],
+      [
+        { path: 'account reviewer', select: 'firstName lastName photo' },
+        { path: 'comment reply' },
+      ],
     );
   }
 }
