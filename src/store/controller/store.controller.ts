@@ -25,6 +25,9 @@ import {
   landingPageSearchValidator,
 } from '../../../libs/utils/src/validator/search.validator';
 import { KeywordPaginatedSearchDto } from '../../../libs/utils/src/dto/search.dto';
+import { ViewResource } from '../../view/decorator/view.decorator';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
+import { ViewEventGuard } from '../../view/guard/guard.view';
 
 @Controller('store')
 export class StoreController {
@@ -39,6 +42,8 @@ export class StoreController {
   }
 
   @Get('landing-page')
+  @ViewResource(ResourceEnum.Store)
+  @UseGuards(ViewEventGuard)
   landingPage(
     @Query(new ObjectValidationPipe(landingPageSearchValidator))
     { page, limit, ...query }: SearchStoreDto,

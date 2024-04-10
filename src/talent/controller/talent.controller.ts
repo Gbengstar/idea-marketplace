@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { TalentService } from '../service/talent.service';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
@@ -16,6 +16,9 @@ import {
 } from '../../../libs/utils/src/dto/search.dto';
 import { FilterQuery, PipelineStage } from 'mongoose';
 import { createTalentValidator } from '../validator/talent.validator';
+import { ViewEventGuard } from '../../view/guard/guard.view';
+import { ViewResource } from '../../view/decorator/view.decorator';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 
 @Controller('talent')
 export class TalentController {
@@ -40,12 +43,15 @@ export class TalentController {
   }
 
   @Get('landing-page')
+  @ViewResource(ResourceEnum.Talent)
+  @UseGuards(ViewEventGuard)
   landingPage(
     @Query(new ObjectValidationPipe(landingPageSearchValidator))
     { page, limit, ...query }: LandingPagePaginatedSearchDto,
   ) {
     const filter: FilterQuery<Talent> = {};
     if ('id' in query) filter._id = query.id;
+
     return this.talentService.paginatedResult({ page, limit }, filter, {});
   }
 
