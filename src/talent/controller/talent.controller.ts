@@ -52,7 +52,14 @@ export class TalentController {
     const filter: FilterQuery<Talent> = {};
     if ('id' in query) filter._id = query.id;
 
-    return this.talentService.paginatedResult({ page, limit }, filter, {});
+    return this.talentService.paginatedResult(
+      { page, limit },
+      filter,
+      {
+        publishedDate: -1,
+      },
+      [{ path: 'account', select: 'verified whatsapp' }],
+    );
   }
 
   @Get('search')
