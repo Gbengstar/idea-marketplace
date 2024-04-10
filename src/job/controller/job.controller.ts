@@ -33,10 +33,7 @@ import {
   KeywordPaginatedSearchDto,
   LandingPagePaginatedSearchDto,
 } from '../../../libs/utils/src/dto/search.dto';
-import {
-  keywordSearchValidator,
-  landingPageSearchValidator,
-} from '../../../libs/utils/src/validator/search.validator';
+import { keywordSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import { ViewResource } from '../../view/decorator/view.decorator';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { ViewEventGuard } from '../../view/guard/guard.view';
