@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AdsService } from '../service/ads.service';
 import { Ads, AdsDocument } from '../model/ads.model';
@@ -20,6 +21,9 @@ import {
 import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
 import { WishListService } from '../../wish-list/service/wish-list.service';
 import { FilterQuery } from 'mongoose';
+import { ViewResource } from '../../view/decorator/view.decorator';
+import { ViewEventGuard } from '../../view/guard/guard.view';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 
 @Controller('ads')
 export class AdsController {
@@ -45,6 +49,8 @@ export class AdsController {
   }
 
   @Get('landing-page')
+  @ViewResource(ResourceEnum.Ads)
+  @UseGuards(ViewEventGuard)
   async landingPageAds(
     @TokenDecorator() token: TokenDataDto,
     @Query(new ObjectValidationPipe(searchAdsValidator))

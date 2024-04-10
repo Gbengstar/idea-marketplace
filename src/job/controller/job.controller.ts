@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { JobService } from '../service/job.service';
 import { ProfileService } from '../service/profile.service';
@@ -35,6 +36,9 @@ import {
   keywordSearchValidator,
   landingPageSearchValidator,
 } from '../../../libs/utils/src/validator/search.validator';
+import { ViewResource } from '../../view/decorator/view.decorator';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
+import { ViewEventGuard } from '../../view/guard/guard.view';
 
 @Controller('job')
 export class JobController {
@@ -103,6 +107,8 @@ export class JobController {
   }
 
   @Get('landing-page')
+  @ViewResource(ResourceEnum.Job)
+  @UseGuards(ViewEventGuard)
   landingPageSearchJobs(
     @Query(new ObjectValidationPipe(landingPageSearchValidator))
     { page, limit, ...query }: LandingPagePaginatedSearchDto,
