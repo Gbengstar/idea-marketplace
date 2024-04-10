@@ -16,6 +16,12 @@ export class ViewService extends BaseService<View> {
   @OnEvent(ViewEventEnum.CREATE_VIEW_EVENT, { suppressErrors: true })
   private async createView(view: View) {
     try {
+      const existingRecord = await this.findOne({
+        ip: view.ip,
+        item: view.item,
+      });
+      if (existingRecord) return;
+
       const newView = new this.model(view);
       const item = (
         await newView.populate([{ path: 'item', select: 'account' }])
