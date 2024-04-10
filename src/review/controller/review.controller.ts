@@ -43,7 +43,7 @@ export class ReviewController {
   ) {
     let accountItem;
 
-    switch (review.ref) {
+    switch (review.reference) {
       case ResourceEnum.Ads: {
         accountItem = await this.adsService.findByIdOrErrorOut(review.item);
         break;
@@ -60,7 +60,7 @@ export class ReviewController {
 
     if (accountItem.account.toString() === id) {
       throw new NotAcceptableException(
-        `you are not allowed to review your ${review.ref}`,
+        `you are not allowed to review your ${review.reference}`,
       );
     }
 
@@ -95,7 +95,7 @@ export class ReviewController {
 
     if (review.account.toString() !== id) {
       throw new NotAcceptableException(
-        `you can only reply to review of your ${review.ref}`,
+        `you can only reply to review of your ${review.reference}`,
       );
     }
 

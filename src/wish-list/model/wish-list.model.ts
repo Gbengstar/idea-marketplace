@@ -9,11 +9,11 @@ export class WishList {
   @Prop({ type: SchemaTypes.ObjectId, ref: Account.name })
   account: string;
 
-  @Prop({ type: SchemaTypes.ObjectId, refPath: 'ref' })
+  @Prop({ type: SchemaTypes.ObjectId, refPath: 'reference' })
   wish: Types.ObjectId;
 
   @Prop({ type: SchemaTypes.String })
-  ref: ResourceEnum;
+  reference: ResourceEnum;
 }
 
 export const WishListSchema = SchemaFactory.createForClass(WishList);

@@ -24,6 +24,7 @@ import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { searchAdsValidator } from '../../ads/validator/ads.validator';
 import { AdsService } from '../../ads/service/ads.service';
 import { SearchAdsDto } from '../../ads/dto/ads.dto';
+import { WishList } from '../model/wish-list.model';
 
 @Controller('wish-list')
 export class WishListController {
@@ -46,7 +47,7 @@ export class WishListController {
 
     return this.wishListService.create({
       account: id,
-      ref: ResourceEnum.Ads,
+      reference: ResourceEnum.Ads,
       wish: new Types.ObjectId(ads),
     });
   }
@@ -57,7 +58,10 @@ export class WishListController {
     @Query(new ObjectValidationPipe(paginationValidator))
     paginate: PaginationDto,
   ) {
-    const filter = { account: new Types.ObjectId(id), ref: 'ads' };
+    const filter: FilterQuery<WishList> = {
+      account: new Types.ObjectId(id),
+      reference: ResourceEnum.Ads,
+    };
 
     const populate: PopulateOptions[] = [
       {
