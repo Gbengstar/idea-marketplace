@@ -26,6 +26,15 @@ export class Talent {
   @Prop()
   description: string;
 
+  @Prop()
+  mainSkill: string;
+
+  @Prop()
+  location: string;
+
+  @Prop()
+  yearsOfExperience: string;
+
   @Prop({ type: [String] })
   skills: string[];
 
