@@ -12,11 +12,11 @@ export class Review {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Account' })
   reviewer: string;
 
-  @Prop({ type: SchemaTypes.ObjectId, refPath: 'ref' })
+  @Prop({ type: SchemaTypes.ObjectId, refPath: 'reference' })
   item: string;
 
   @Prop({ type: SchemaTypes.String })
-  ref: ResourceEnum;
+  reference: ResourceEnum;
 
   @Prop({ type: Number })
   rating: ReviewRatingEnum;

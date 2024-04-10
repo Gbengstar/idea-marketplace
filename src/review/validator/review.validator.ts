@@ -13,7 +13,7 @@ export const createReviewValidator = Joi.object<Review>({
     .valid(...Object.values(ReviewRatingEnum))
     .required(),
 
-  ref: Joi.string()
+  reference: Joi.string()
     .required()
     .valid(...Object.values(ResourceEnum)),
 });
