@@ -6,22 +6,27 @@ import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pi
 import { searchAdsValidator } from '../../ads/validator/ads.validator';
 import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import { Talent } from '../model/talent.model';
-import {
-  keywordSearchValidator,
-  landingPageSearchValidator,
-} from '../../../libs/utils/src/validator/search.validator';
+import { keywordSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import {
   KeywordPaginatedSearchDto,
   LandingPagePaginatedSearchDto,
 } from '../../../libs/utils/src/dto/search.dto';
 import { FilterQuery, PipelineStage } from 'mongoose';
-import { createTalentValidator } from '../validator/talent.validator';
+import {
+  createTalentValidator,
+  talentLandingPageSearchValidator,
+} from '../validator/talent.validator';
 import { ViewEventGuard } from '../../view/guard/guard.view';
 import { ViewResource } from '../../view/decorator/view.decorator';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
+import {
+  querySort,
+  regexQuery,
+} from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('talent')
 export class TalentController {
+  private readonly sortOrder = querySort();
   constructor(private readonly talentService: TalentService) {}
 
   @Get()
@@ -46,18 +51,22 @@ export class TalentController {
   @ViewResource(ResourceEnum.Talent)
   @UseGuards(ViewEventGuard)
   landingPage(
-    @Query(new ObjectValidationPipe(landingPageSearchValidator))
-    { page, limit, ...query }: LandingPagePaginatedSearchDto,
+    @Query(new ObjectValidationPipe(talentLandingPageSearchValidator))
+    { page, limit, ...query }: LandingPagePaginatedSearchDto<Talent>,
   ) {
     const filter: FilterQuery<Talent> = {};
     if ('id' in query) filter._id = query.id;
+    if ('name' in query) {
+      filter.name = regexQuery(query.name);
+    }
+    if ('location' in query) {
+      filter.location = regexQuery(query.location);
+    }
 
     return this.talentService.paginatedResult(
       { page, limit },
       filter,
-      {
-        publishedDate: -1,
-      },
+      this.sortOrder,
       [{ path: 'account', select: 'verified whatsapp' }],
     );
   }
@@ -67,20 +76,21 @@ export class TalentController {
     @Query(new ObjectValidationPipe(keywordSearchValidator))
     { keyword, ...paginate }: KeywordPaginatedSearchDto,
   ) {
-    const escapedText = keyword.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
     const pipeline: PipelineStage[] = [
       {
         $match: {
           $or: [
-            { description: { $regex: escapedText, $options: 'i' } },
-            { name: { $regex: escapedText, $options: 'i' } },
+            { description: regexQuery(keyword) },
+            { name: regexQuery(keyword) },
           ],
         },
       },
     ];
 
-    return this.talentService.aggregatePagination(paginate, pipeline, {
-      createdAt: -1,
-    });
+    return this.talentService.aggregatePagination(
+      paginate,
+      pipeline,
+      this.sortOrder,
+    );
   }
 }

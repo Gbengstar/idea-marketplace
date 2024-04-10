@@ -4,4 +4,6 @@ export type PaginateAtlasSearchDto = PaginationDto & { keyword: string };
 
 export type KeywordPaginatedSearchDto = PaginationDto & { keyword: string };
 
-export type LandingPagePaginatedSearchDto = PaginationDto & { id: string };
+export type LandingPagePaginatedSearchDto<T = unknown> = PaginationDto & {
+  id: string;
+} & T;
