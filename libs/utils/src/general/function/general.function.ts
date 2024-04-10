@@ -71,3 +71,13 @@ export function returnOnDev(data: Record<string, string>) {
   if (process.env.NODE_ENV === 'production') return;
   return data;
 }
+
+export const regexQuery = (keyword: string) => {
+  const cleanText = (keyword || '').replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
+  return { $regex: cleanText, $options: 'i' };
+};
+
+export const querySort = (): Record<string, 1 | -1> => ({
+  publishedDate: -1,
+  createdAt: -1,
+});

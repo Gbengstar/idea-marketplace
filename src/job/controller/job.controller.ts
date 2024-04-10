@@ -23,6 +23,7 @@ import { paginationValidator } from '../../../libs/utils/src/pagination/validato
 import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import {
   createJobValidator,
+  jobLandingPageSearchValidator,
   updateJobValidator,
 } from '../validator/job.validator';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
@@ -32,16 +33,18 @@ import {
   KeywordPaginatedSearchDto,
   LandingPagePaginatedSearchDto,
 } from '../../../libs/utils/src/dto/search.dto';
-import {
-  keywordSearchValidator,
-  landingPageSearchValidator,
-} from '../../../libs/utils/src/validator/search.validator';
+import { keywordSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import { ViewResource } from '../../view/decorator/view.decorator';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { ViewEventGuard } from '../../view/guard/guard.view';
+import {
+  querySort,
+  regexQuery,
+} from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('job')
 export class JobController {
+  private readonly sortOrder = querySort();
   constructor(
     private readonly jobService: JobService,
     private readonly profileService: ProfileService,
@@ -87,35 +90,39 @@ export class JobController {
     @Query(new ObjectValidationPipe(keywordSearchValidator))
     { keyword, ...paginate }: KeywordPaginatedSearchDto,
   ) {
-    const escapedText = keyword.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
     const pipeline: PipelineStage[] = [
       {
         $match: {
           account: new Types.ObjectId(account),
           $or: [
-            { jobTitle: { $regex: escapedText, $options: 'i' } },
-            { description: { $regex: escapedText, $options: 'i' } },
-            { location: { $regex: escapedText, $options: 'i' } },
+            { jobTitle: regexQuery(keyword) },
+            { description: regexQuery(keyword) },
+            { location: regexQuery(keyword) },
           ],
         },
       },
     ];
 
-    return this.jobService.aggregatePagination(paginate, pipeline, {
-      createdAt: -1,
-    });
+    return this.jobService.aggregatePagination(
+      paginate,
+      pipeline,
+      this.sortOrder,
+    );
   }
 
   @Get('landing-page')
   @ViewResource(ResourceEnum.Job)
   @UseGuards(ViewEventGuard)
   landingPageSearchJobs(
-    @Query(new ObjectValidationPipe(landingPageSearchValidator))
-    { page, limit, ...query }: LandingPagePaginatedSearchDto,
+    @Query(new ObjectValidationPipe(jobLandingPageSearchValidator))
+    { page, limit, ...query }: LandingPagePaginatedSearchDto<Job>,
   ) {
     const filter: FilterQuery<Job> = {};
 
     if ('id' in query) filter._id = new Types.ObjectId(query.id);
+    if ('jobTitle' in query) filter.jobTitle = regexQuery(query.jobTitle);
+    if ('locationType' in query) filter.locationType = query.locationType;
+    if ('jobType' in query) filter.jobType = query.jobType;
 
     const pipeline: PipelineStage[] = [
       {
@@ -131,9 +138,11 @@ export class JobController {
       },
     ];
 
-    return this.jobService.aggregatePagination({ page, limit }, pipeline, {
-      createdAt: -1,
-    });
+    return this.jobService.aggregatePagination(
+      { page, limit },
+      pipeline,
+      this.sortOrder,
+    );
   }
 
   @Get('search')
@@ -141,14 +150,13 @@ export class JobController {
     @Query(new ObjectValidationPipe(keywordSearchValidator))
     { keyword, ...paginate }: KeywordPaginatedSearchDto,
   ) {
-    const escapedText = keyword.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
     const pipeline: PipelineStage[] = [
       {
         $match: {
           $or: [
-            { jobTitle: { $regex: escapedText, $options: 'i' } },
-            { description: { $regex: escapedText, $options: 'i' } },
-            { location: { $regex: escapedText, $options: 'i' } },
+            { jobTitle: regexQuery(keyword) },
+            { description: regexQuery(keyword) },
+            { location: regexQuery(keyword) },
           ],
         },
       },

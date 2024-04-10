@@ -3,6 +3,8 @@ import { Talent } from '../model/talent.model';
 import { Education } from '../schema/talent-education.schema';
 import { WorkExperience } from '../schema/talent-work-experience.schema';
 import { Certification } from '../schema/talent-certification.schema';
+import { landingPageSearchValidator } from '../../../libs/utils/src/validator/search.validator';
+import { LandingPagePaginatedSearchDto } from '../../../libs/utils/src/dto/search.dto';
 
 export const createTalentValidator = Joi.object<Talent>({
   photo: Joi.string().uri().required(),
@@ -11,6 +13,9 @@ export const createTalentValidator = Joi.object<Talent>({
   cv: Joi.string().uri().required(),
   description: Joi.string().required(),
   skills: Joi.array().items(Joi.string()),
+  mainSkill: Joi.string().required(),
+  location: Joi.string().required(),
+  yearsOfExperience: Joi.string().required(),
   education: Joi.array().items(
     Joi.object<Education>({
       name: Joi.string().required(),
@@ -45,3 +50,9 @@ export const createTalentValidator = Joi.object<Talent>({
   ),
   publishedDate: Joi.date().default(new Date()),
 });
+
+export const talentLandingPageSearchValidator =
+  landingPageSearchValidator.append<LandingPagePaginatedSearchDto<Talent>>({
+    location: Joi.string().trim(),
+    name: Joi.string().trim(),
+  });
