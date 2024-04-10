@@ -23,6 +23,9 @@ export class View {
 
   @Prop({ type: Date })
   timestamp: Date;
+
+  @Prop()
+  ip: string;
 }
 
 export const ViewSchema = SchemaFactory.createForClass(View);

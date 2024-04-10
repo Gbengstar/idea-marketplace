@@ -31,6 +31,7 @@ export class ViewEventGuard implements CanActivate {
 
       if ('id' in query) {
         const view: View = {
+          ip: request.ip,
           account: new Types.ObjectId().toString(),
           item: query.id,
           reference: resource,
