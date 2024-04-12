@@ -129,6 +129,7 @@ export class AppModule implements NestModule {
         { path: '/api/v1/catalog/sub-category', method: RequestMethod.GET },
         { path: '/api/v1/review', method: RequestMethod.GET },
         { path: '/api/v1/view', method: RequestMethod.GET },
+        { path: '/api/v1/search', method: RequestMethod.GET },
       )
       .forRoutes({
         path: '*',
