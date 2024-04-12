@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Logger,
+  NotFoundException,
   Patch,
   Post,
   Query,
@@ -28,6 +29,7 @@ import { KeywordPaginatedSearchDto } from '../../../libs/utils/src/dto/search.dt
 import { ViewResource } from '../../view/decorator/view.decorator';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { ViewEventGuard } from '../../view/guard/guard.view';
+import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('store')
 export class StoreController {
@@ -35,10 +37,13 @@ export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
   @Get()
-  getStore(@TokenDecorator() token: TokenDataDto) {
-    return this.storeService.findOne({ account: token.id }, [
+  async getStore(@TokenDecorator() token: TokenDataDto) {
+    const store = await this.storeService.findOne({ account: token.id }, [
       { path: 'account' },
     ]);
+
+    if (store) return store;
+    throw new NotFoundException('store not found');
   }
 
   @Get('landing-page')
@@ -58,14 +63,12 @@ export class StoreController {
     @Query(new ObjectValidationPipe(keywordSearchValidator))
     { keyword, ...paginate }: KeywordPaginatedSearchDto,
   ) {
-    const escapedText = keyword.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
-    this.logger.log({ escapedText });
     const pipeline: PipelineStage[] = [
       {
         $match: {
           $or: [
-            { businessName: { $regex: escapedText, $options: 'i' } },
-            { description: { $regex: escapedText, $options: 'i' } },
+            { businessName: regexQuery(keyword) },
+            { description: regexQuery(keyword) },
           ],
         },
       },
