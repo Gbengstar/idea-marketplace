@@ -5,6 +5,7 @@ export type DistinctFilterDto = { distinct: string } & Ads;
 
 export type SearchAdsDto = PaginationDto & {
   id: string;
+  price: { min: number; max: number };
   keyword: string;
   account: string;
   location: string;
