@@ -25,6 +25,7 @@ import { searchAdsValidator } from '../../ads/validator/ads.validator';
 import { AdsService } from '../../ads/service/ads.service';
 import { SearchAdsDto } from '../../ads/dto/ads.dto';
 import { WishList } from '../model/wish-list.model';
+import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('wish-list')
 export class WishListController {
@@ -90,19 +91,16 @@ export class WishListController {
     { keyword, limit, page }: SearchAdsDto,
   ) {
     const wishIds = await this.wishListService.wishListIds({ account });
-    const escapedText = (keyword || '').replace(
-      /[-\/\\^$*+?.():|{}\[\]]/g,
-      '\\$&',
-    );
+    const query = regexQuery(keyword);
 
     const filter: FilterQuery<Ads> = {
       _id: { $in: wishIds },
       $or: [
-        { location: { $regex: escapedText, $options: 'i' } },
-        { description: { $regex: escapedText, $options: 'i' } },
-        { title: { $regex: escapedText, $options: 'i' } },
-        { condition: { $regex: escapedText, $options: 'i' } },
-        { brandName: { $regex: escapedText, $options: 'i' } },
+        { location: query },
+        { description: query },
+        { title: query },
+        { condition: query },
+        { brandName: query },
       ],
     };
 

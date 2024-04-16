@@ -574,13 +574,13 @@ export abstract class BaseService<C> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  aggregatePagination = async (
+  async aggregatePagination<T = C>(
     pg: PaginationDto,
     aggregate: PipelineStage[],
     sort?: Record<string, 1 | -1>,
-  ) => {
+  ) {
     const [foundItems, [countData]] = await Promise.all([
-      this.model.aggregate<C>([
+      this.model.aggregate<T>([
         ...aggregate,
         { $limit: pg.limit },
         { $skip: (pg.page - 1) * pg.limit },
@@ -593,7 +593,7 @@ export abstract class BaseService<C> {
     ]);
 
     return this.paginateResponse(pg, foundItems, countData?.count ?? 0);
-  };
+  }
 
   aggregatePaginationSum = async (
     pg: PaginationDto,
@@ -641,7 +641,10 @@ export abstract class BaseService<C> {
     path: string[],
     sort?: Record<string, 1 | -1>,
   ) {
-    const escapedText = text.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
+    const escapedText = (text || '').replace(
+      /[-\/\\^$*+?.():|{}\[\]]/g,
+      '\\$&',
+    );
     const search: PipelineStage = {
       $search: {
         text: {

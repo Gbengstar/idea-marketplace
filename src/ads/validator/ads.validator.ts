@@ -44,4 +44,8 @@ export const searchAdsValidator = paginationValidator.append<SearchAdsDto>({
   condition: Joi.string().trim(),
   category: objectIdValidator,
   subCategory: objectIdValidator,
+  price: Joi.object({
+    min: Joi.number(),
+    max: Joi.number().when('min', { then: Joi.required() }),
+  }),
 });
