@@ -8,7 +8,6 @@ export const dbSchemaOptions: SchemaOptions = {
   toJSON: {
     virtuals: true,
     transform: (_, ret) => {
-      delete ret._id;
       delete ret.password;
       delete ret.salt;
       delete ret.visible;
@@ -22,7 +21,6 @@ export const dbSchemaOptions: SchemaOptions = {
   toObject: {
     virtuals: true,
     transform: (_, ret) => {
-      delete ret._id;
       delete ret.password;
       delete ret.salt;
       delete ret.visible;
