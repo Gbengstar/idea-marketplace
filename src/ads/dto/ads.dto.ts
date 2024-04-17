@@ -9,7 +9,7 @@ export type SearchAdsDto = PaginationDto & {
   keyword: string;
   account: string;
   location: string;
-  verifiedVendor: boolean;
+  verified: boolean;
   negotiable: boolean;
   condition: string;
   category: string;

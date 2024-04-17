@@ -39,7 +39,7 @@ export const searchAdsValidator = paginationValidator.append<SearchAdsDto>({
   keyword: Joi.string().trim(),
   account: objectIdValidator,
   location: Joi.string().trim(),
-  verifiedVendor: Joi.boolean(),
+  verified: Joi.boolean(),
   negotiable: Joi.boolean(),
   condition: Joi.string().trim(),
   category: objectIdValidator,

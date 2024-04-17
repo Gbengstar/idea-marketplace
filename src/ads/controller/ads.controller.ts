@@ -57,7 +57,10 @@ export class AdsController {
   ) {
     const [ads, wishList] = await Promise.all([
       this.adsService.searchAds({ page, limit, ...query }),
-      this.wishListService.wishListIds({ account: token?.id, ref: 'ads' }),
+      this.wishListService.wishListIds({
+        account: token?.id,
+        reference: ResourceEnum.Ads,
+      }),
     ]);
 
     if (!(token && wishList[0])) return ads;
