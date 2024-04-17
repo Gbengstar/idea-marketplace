@@ -20,11 +20,9 @@ import {
 } from '../validator/ads.validator';
 import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
 import { WishListService } from '../../wish-list/service/wish-list.service';
-import { FilterQuery } from 'mongoose';
 import { ViewResource } from '../../view/decorator/view.decorator';
 import { ViewEventGuard } from '../../view/guard/guard.view';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
-import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('ads')
 export class AdsController {
@@ -57,15 +55,6 @@ export class AdsController {
     @Query(new ObjectValidationPipe(searchAdsValidator))
     { page, limit, ...query }: SearchAdsDto,
   ) {
-    // const filter: FilterQuery<Ads> = {};
-    // if ('id' in query) filter._id = query.id;
-    // if ('condition' in query) filter.condition = query.condition;
-    // if ('location' in query)
-    //   filter['store.locations.address'] = regexQuery(query.location);
-    // if ('negotiable' in query) filter.negotiable = query.negotiable;
-    // if ('verifiedVendor' in query)
-    //   filter.account.verified = query.verifiedVendor;
-
     const [ads, wishList] = await Promise.all([
       this.adsService.searchAds({ page, limit, ...query }),
       this.wishListService.wishListIds({ account: token?.id, ref: 'ads' }),
