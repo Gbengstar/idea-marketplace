@@ -2,10 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { BaseService } from '../../../libs/utils/src/database/service/db.service';
 import { Ads, AdsDocument } from '../model/ads.model';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model, PipelineStage } from 'mongoose';
+import { FilterQuery, Model, PipelineStage, Types } from 'mongoose';
 import { SearchAdsDto } from '../dto/ads.dto';
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
-import { Store } from '../../store/model/store.model';
 
 @Injectable()
 export class AdsService extends BaseService<Ads> {
@@ -16,47 +15,76 @@ export class AdsService extends BaseService<Ads> {
   }
 
   searchAds({ page, limit, ...query }: SearchAdsDto) {
-    this.logger.log({ query });
-
     const filter: FilterQuery<Ads> = {};
-    const storeFilter: FilterQuery<Store> = {};
-    const storeMatchFilter: FilterQuery<Store> = {};
-    if ('id' in query) filter._id = query.id;
-    if ('condition' in query) filter.condition = query.condition;
-    if ('location' in query) {
-      storeFilter['locations.address'] = regexQuery(query.location);
 
-      storeMatchFilter['store.locations'] = {
-        $elemMatch: { address: regexQuery(query.location) },
-      };
+    if ('id' in query) filter._id = new Types.ObjectId(query.id);
+
+    if ('negotiable' in query) {
+      filter.negotiable = query.negotiable;
     }
-    if ('negotiable' in query) filter.negotiable = query.negotiable;
-    if ('verifiedVendor' in query)
-      filter.account.verified = query.verifiedVendor;
+
+    if ('condition' in query) filter.condition = query.condition;
+
     if ('price' in query) {
       filter.price = { $gte: query.price.min, $lte: query.price.max };
     }
 
-    const pipeline: PipelineStage[] = [
-      { $match: filter },
-      {
-        $lookup: {
-          from: 'stores',
-          foreignField: '_id',
-          localField: 'store',
-          as: 'store',
-          pipeline: [{ $match: storeFilter }],
-        },
-      },
-      {
-        $addFields: {
-          store: {
-            $arrayElemAt: ['$store', 0],
+    const pipeline: PipelineStage[] = [{ $match: filter }];
+
+    if ('location' in query) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'stores',
+            foreignField: '_id',
+            localField: 'store',
+            as: 'store',
+            pipeline: [
+              { $match: { 'locations.address': regexQuery(query.location) } },
+            ],
           },
         },
-      },
-      { $match: storeMatchFilter },
-    ];
+        {
+          $addFields: {
+            store: {
+              $arrayElemAt: ['$store', 0],
+            },
+          },
+        },
+        {
+          $match: {
+            'store.locations': {
+              $elemMatch: { address: regexQuery(query.location) },
+            },
+          },
+        },
+      );
+    }
+
+    if ('verified' in query) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'accounts',
+            foreignField: '_id',
+            localField: 'account',
+            as: 'account',
+            pipeline: [{ $match: { verified: query.verified } }],
+          },
+        },
+        {
+          $addFields: {
+            account: {
+              $arrayElemAt: ['$account', 0],
+            },
+          },
+        },
+        { $match: { 'account.verified': query.verified } },
+      );
+    }
+
+    pipeline.push({ $project: { account: 0 } });
+
     return this.aggregatePagination<AdsDocument>({ page, limit }, pipeline);
   }
 }
