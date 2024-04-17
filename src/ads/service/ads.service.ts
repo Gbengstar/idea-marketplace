@@ -16,18 +16,27 @@ export class AdsService extends BaseService<Ads> {
 
   searchAds({ page, limit, ...query }: SearchAdsDto) {
     const filter: FilterQuery<Ads> = {};
-    const pipeline: PipelineStage[] = [{ $match: filter }];
-
-    if ('id' in query) {
-      filter._id = new Types.ObjectId(query.id);
-      pipeline.push({
+    const pipeline: PipelineStage[] = [
+      { $match: filter },
+      {
         $lookup: {
           from: 'stores',
           foreignField: '_id',
           localField: 'store',
           as: 'store',
         },
-      });
+      },
+      {
+        $addFields: {
+          store: {
+            $arrayElemAt: ['$store', 0],
+          },
+        },
+      },
+    ];
+
+    if ('id' in query) {
+      filter._id = new Types.ObjectId(query.id);
     }
 
     if ('negotiable' in query) {
@@ -41,33 +50,13 @@ export class AdsService extends BaseService<Ads> {
     }
 
     if ('location' in query) {
-      pipeline.push(
-        {
-          $lookup: {
-            from: 'stores',
-            foreignField: '_id',
-            localField: 'store',
-            as: 'store',
-            pipeline: [
-              { $match: { 'locations.address': regexQuery(query.location) } },
-            ],
+      pipeline.push({
+        $match: {
+          'store.locations': {
+            $elemMatch: { address: regexQuery(query.location) },
           },
         },
-        {
-          $addFields: {
-            store: {
-              $arrayElemAt: ['$store', 0],
-            },
-          },
-        },
-        {
-          $match: {
-            'store.locations': {
-              $elemMatch: { address: regexQuery(query.location) },
-            },
-          },
-        },
-      );
+      });
     }
 
     if ('verified' in query) {
@@ -77,22 +66,21 @@ export class AdsService extends BaseService<Ads> {
             from: 'accounts',
             foreignField: '_id',
             localField: 'account',
-            as: 'account',
+            as: 'accountData',
             pipeline: [{ $match: { verified: query.verified } }],
           },
         },
         {
           $addFields: {
-            account: {
-              $arrayElemAt: ['$account', 0],
+            accountData: {
+              $arrayElemAt: ['$accountData', 0],
             },
           },
         },
-        { $match: { 'account.verified': query.verified } },
+        { $match: { 'accountData.verified': query.verified } },
+        { $project: { accountData: 0 } },
       );
     }
-
-    pipeline.push({ $project: { account: 0 } });
 
     return this.aggregatePagination<AdsDocument>({ page, limit }, pipeline);
   }
