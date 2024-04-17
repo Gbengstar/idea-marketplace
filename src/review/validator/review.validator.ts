@@ -30,4 +30,5 @@ export const searchReviewValidator =
     rating: Joi.number().valid(...Object.values(ReviewRatingEnum)),
     account: objectIdValidator,
     reviewer: objectIdValidator,
+    countOnly: Joi.boolean().valid(true),
   });
