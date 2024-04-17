@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ReviewService } from '../service/review.service';
 import { Review } from '../model/review.model';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery, PipelineStage, Types } from 'mongoose';
 import { GetItemReviewsDto, ReplyReviewsDto } from '../dto/review.dto';
 import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
 import {
@@ -104,6 +104,29 @@ export class ReviewController {
     return newReview.populate([{ path: 'comment reply' }, { path: 'item' }]);
   }
 
+  @Get('rating-analysis')
+  async reviewRatingAnalysis(
+    @Query(new ObjectValidationPipe(searchReviewValidator))
+    review: GetItemReviewsDto,
+  ) {
+    const filter: FilterQuery<Review> = {};
+
+    if ('reviewer' in review)
+      filter.reviewer = new Types.ObjectId(review.reviewer);
+    if ('account' in review)
+      filter.account = new Types.ObjectId(review.account);
+
+    if ('rating' in review) filter.rating = review.rating;
+
+    if ('item' in review) filter.item = new Types.ObjectId(review.item);
+    const pipeline: PipelineStage[] = [
+      { $match: filter },
+      { $group: { _id: '$rating', numberOfRating: { $count: {} } } },
+    ];
+
+    return this.reviewService.aggregate(pipeline);
+  }
+
   @Get()
   getItemReview(
     @Query(new ObjectValidationPipe(searchReviewValidator))
@@ -121,6 +144,8 @@ export class ReviewController {
     if ('item' in review) filter.item = new Types.ObjectId(review.item);
 
     if ('id' in review) filter._id = new Types.ObjectId(review.id);
+
+    if ('countOnly' in review) return this.reviewService.countDocuments(filter);
 
     return this.reviewService.paginatedResultAverage(
       { limit, page },

@@ -15,7 +15,7 @@ import {
 import { stringValidator } from '../../../libs/utils/src/validator/custom.validator';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { FilterQuery, PopulateOptions, Types } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
 import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
@@ -24,7 +24,6 @@ import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { searchAdsValidator } from '../../ads/validator/ads.validator';
 import { AdsService } from '../../ads/service/ads.service';
 import { SearchAdsDto } from '../../ads/dto/ads.dto';
-import { WishList } from '../model/wish-list.model';
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('wish-list')
@@ -42,7 +41,10 @@ export class WishListController {
     ads: string,
     @TokenDecorator() { id }: TokenDataDto,
   ) {
-    const wish = await this.wishListService.findOne({ account: id, wish: ads });
+    const wish = await this.wishListService.findOne({
+      account: id,
+      wish: new Types.ObjectId(ads),
+    });
 
     if (wish) return wish;
 
@@ -59,29 +61,24 @@ export class WishListController {
     @Query(new ObjectValidationPipe(paginationValidator))
     paginate: PaginationDto,
   ) {
-    const filter: FilterQuery<WishList> = {
-      account: new Types.ObjectId(id),
-      reference: ResourceEnum.Ads,
-    };
+    const wishIds = await this.wishListService.wishListIds({ account: id });
 
-    const populate: PopulateOptions[] = [
-      {
-        path: 'wish',
-        model: 'Ads',
-        transform: (doc: Ads) => {
-          doc.wish = true;
-          return doc;
+    return this.adsService
+      .paginatedResult(
+        paginate,
+        { _id: { $in: wishIds } },
+        {
+          createdAt: -1,
         },
-        populate: { path: 'store' },
-      },
-    ];
+      )
+      .then((ads) => {
+        ads.foundItems = ads.foundItems.map((ad: Ads) => {
+          ad.wish = true;
+          return ad;
+        });
 
-    return this.wishListService.paginatedResult(
-      paginate,
-      filter,
-      { createdAt: -1 },
-      populate,
-    );
+        return ads;
+      });
   }
 
   @Get('ads-search')
