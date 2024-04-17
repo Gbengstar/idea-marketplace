@@ -16,8 +16,19 @@ export class AdsService extends BaseService<Ads> {
 
   searchAds({ page, limit, ...query }: SearchAdsDto) {
     const filter: FilterQuery<Ads> = {};
+    const pipeline: PipelineStage[] = [{ $match: filter }];
 
-    if ('id' in query) filter._id = new Types.ObjectId(query.id);
+    if ('id' in query) {
+      filter._id = new Types.ObjectId(query.id);
+      pipeline.push({
+        $lookup: {
+          from: 'stores',
+          foreignField: '_id',
+          localField: 'store',
+          as: 'store',
+        },
+      });
+    }
 
     if ('negotiable' in query) {
       filter.negotiable = query.negotiable;
@@ -28,8 +39,6 @@ export class AdsService extends BaseService<Ads> {
     if ('price' in query) {
       filter.price = { $gte: query.price.min, $lte: query.price.max };
     }
-
-    const pipeline: PipelineStage[] = [{ $match: filter }];
 
     if ('location' in query) {
       pipeline.push(
