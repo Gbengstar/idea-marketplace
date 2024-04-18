@@ -39,6 +39,9 @@ export class Account {
 
   @Prop({ type: SchemaTypes.ObjectId, ref: Store.name })
   store: string;
+
+  @Prop()
+  pushToken: string;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);
