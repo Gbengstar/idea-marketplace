@@ -111,7 +111,7 @@ export class TokenService {
 
     switch (true) {
       case !!req.headers.cookie:
-        token = req.headers.cookie.split('=')[1];
+        token = req.headers.cookie.split('; ')[0].split('=')[1];
         break;
       case req.headers.authorization?.startsWith('Bearer'):
         token = req.headers.authorization.split(' ')[1];
