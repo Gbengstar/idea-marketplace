@@ -13,7 +13,7 @@ export class OptionalTokenMiddleware implements NestMiddleware {
   constructor(private readonly tokenService: TokenService) {}
   async use(req: Request, res: Response, next: NextFunction) {
     try {
-      const token = TokenService.getToken(req);
+      const token = this.tokenService.getToken(req);
 
       if (token) {
         const tokenData = await this.tokenService.verifyToken(token);
