@@ -106,21 +106,21 @@ export class TokenService {
     return jwt.decode(token, { complete: true });
   }
 
-  static readonly getToken = (req: Request) => {
+  getToken = (req: Request) => {
     let token: string;
-    if (req.headers.authorization?.startsWith('Bearer')) {
-      //
-      token = req.headers.authorization.split(' ')[1];
 
-      Logger.log({ authorization: token });
-      //
-    } else if (req.signedCookies?.token) {
-      //
-
-      token = req.signedCookies?.token;
-
-      Logger.log({ cookie: token });
+    switch (true) {
+      case !!req.headers.cookie:
+        token = req.headers.cookie.split('=')[1];
+        break;
+      case req.headers.authorization?.startsWith('Bearer'):
+        token = req.headers.authorization.split(' ')[1];
+        break;
+      case !!req.signedCookies?.token:
+        token = req.signedCookies?.token;
+        break;
     }
+
     return token;
   };
 }

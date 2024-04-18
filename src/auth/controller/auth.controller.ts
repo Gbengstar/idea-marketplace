@@ -234,7 +234,10 @@ export class AuthController {
 
     const accessToken = await this.tokenService.signToken(tokenData);
 
-    response.cookie('token', accessToken, { signed: true, httpOnly: true });
+    response.cookie(
+      'token',
+      accessToken /**{ signed: true, httpOnly: true } */,
+    );
 
     return response.json({ status: 'SUCCESS', data: { accessToken, account } });
   }
