@@ -111,7 +111,10 @@ export class TokenService {
 
     switch (true) {
       case !!req.headers.cookie:
-        token = req.headers.cookie.split('; ')[0].split('=')[1];
+        req.headers.cookie.split('; ').forEach((item) => {
+          const data = item.split('=');
+          if (data[0] === 'token') token = data[1];
+        });
         break;
       case req.headers.authorization?.startsWith('Bearer'):
         token = req.headers.authorization.split(' ')[1];
@@ -120,8 +123,6 @@ export class TokenService {
         token = req.signedCookies?.token;
         break;
     }
-
-    Logger.debug({ headers: req.headers, token, cookie: req.headers.cookie });
 
     return token;
   };
