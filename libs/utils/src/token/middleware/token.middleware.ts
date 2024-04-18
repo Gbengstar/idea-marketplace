@@ -14,7 +14,7 @@ export class TokenMiddleware implements NestMiddleware {
   constructor(private readonly tokenService: TokenService) {}
   async use(req: Request, res: Response, next: NextFunction) {
     try {
-      this.logger.debug({ request: req });
+      this.logger.debug({ headers: req.headers });
       const token = TokenService.getToken(req);
 
       if (!token) {
