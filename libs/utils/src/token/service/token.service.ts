@@ -109,9 +109,17 @@ export class TokenService {
   static readonly getToken = (req: Request) => {
     let token: string;
     if (req.headers.authorization?.startsWith('Bearer')) {
+      //
       token = req.headers.authorization.split(' ')[1];
+
+      Logger.log({ authorization: token });
+      //
     } else if (req.signedCookies?.token) {
+      //
+
       token = req.signedCookies?.token;
+
+      Logger.log({ cookie: token });
     }
     return token;
   };
