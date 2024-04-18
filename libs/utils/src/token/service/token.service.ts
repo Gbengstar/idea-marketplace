@@ -121,6 +121,8 @@ export class TokenService {
         break;
     }
 
+    Logger.debug({ headers: req.headers, token, cookie: req.headers.cookie });
+
     return token;
   };
 }
