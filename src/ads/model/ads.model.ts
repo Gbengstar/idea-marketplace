@@ -55,6 +55,9 @@ export class Ads {
   @Prop({ default: false })
   wish: boolean;
 
+  // @Prop({ default: false })
+  // follow: boolean;
+
   @Prop()
   publishedDate: Date;
 }
