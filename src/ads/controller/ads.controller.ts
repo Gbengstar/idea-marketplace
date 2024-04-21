@@ -55,8 +55,6 @@ export class AdsController {
   }
 
   @Get('landing-page')
-  @ViewResource(ResourceEnum.Ads)
-  @UseGuards(ViewEventGuard)
   async landingPageAds(
     @TokenDecorator() token: TokenDataDto,
     @Query(new ObjectValidationPipe(searchAdsValidator))
