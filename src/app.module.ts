@@ -91,6 +91,7 @@ export class AppModule implements NestModule {
       .apply(OptionalTokenMiddleware)
       .forRoutes(
         { path: '/ads/landing-page', method: RequestMethod.GET },
+        { path: '/ads/landing-page/:id', method: RequestMethod.GET },
         { path: '/ads/search', method: RequestMethod.GET },
         { path: '/store/landing-page', method: RequestMethod.GET },
         { path: '/store/search', method: RequestMethod.GET },
@@ -123,6 +124,7 @@ export class AppModule implements NestModule {
         },
         { path: '/api/v1/promotion', method: RequestMethod.GET },
         { path: '/api/v1/ads/landing-page', method: RequestMethod.GET },
+        { path: 'api/v1/ads/landing-page/:id', method: RequestMethod.GET },
         { path: '/api/v1/ads/search', method: RequestMethod.GET },
         { path: '/api/v1/store/landing-page', method: RequestMethod.GET },
         { path: '/api/v1/store/search', method: RequestMethod.GET },

@@ -28,12 +28,13 @@ export class ViewEventGuard implements CanActivate {
 
       const request: Request = context.switchToHttp().getRequest();
       const query = request.query as unknown as { id: string };
+      const param = request.params as unknown as { id: string };
 
-      if ('id' in query) {
+      if ('id' in query || 'id' in param) {
         const view: View = {
           ip: request.ip,
           account: new Types.ObjectId().toString(),
-          item: query.id,
+          item: query?.id ?? param.id,
           reference: resource,
           timestamp: new Date(),
         };

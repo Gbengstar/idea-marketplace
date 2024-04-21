@@ -12,7 +12,10 @@ import { AdsService } from '../service/ads.service';
 import { Ads, AdsDocument } from '../model/ads.model';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
+import {
+  ObjectValidationPipe,
+  StringValidationPipe,
+} from '../../../libs/utils/src/pipe/validation.pipe';
 import {
   createAdsValidator,
   distinctAdsPropValidator,
@@ -23,6 +26,9 @@ import { WishListService } from '../../wish-list/service/wish-list.service';
 import { ViewResource } from '../../view/decorator/view.decorator';
 import { ViewEventGuard } from '../../view/guard/guard.view';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
+import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
+import { FollowService } from '../../follow/service/follow.service';
+import { StoreDocument } from '../../store/model/store.model';
 
 @Controller('ads')
 export class AdsController {
@@ -31,6 +37,7 @@ export class AdsController {
   constructor(
     private readonly adsService: AdsService,
     private readonly wishListService: WishListService,
+    private readonly followService: FollowService,
   ) {}
 
   @Post()
@@ -67,6 +74,32 @@ export class AdsController {
 
     for (const ad of ads.foundItems) {
       ad.wish = wishList.includes(ad._id.toString());
+    }
+
+    return ads;
+  }
+
+  @Get('landing-page/:id')
+  @ViewResource(ResourceEnum.Ads)
+  @UseGuards(ViewEventGuard)
+  async oneAds(
+    @TokenDecorator() token: TokenDataDto,
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
+  ) {
+    const [ads, wishList, follow] = await Promise.all([
+      this.adsService.findByIdOrErrorOut(id, [{ path: 'store' }]),
+      this.wishListService.wishListIds({
+        account: token?.id,
+        reference: ResourceEnum.Ads,
+      }),
+      this.followService.followingStoreIds(token?.id),
+    ]);
+
+    if (wishList[0]) ads.wish = wishList.includes(ads._id.toString());
+    if (follow[0]) {
+      const store = ads.store as unknown as StoreDocument;
+      store.follow = follow.includes(store._id.toString());
     }
 
     return ads;
