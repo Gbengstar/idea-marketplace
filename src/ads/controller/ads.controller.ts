@@ -105,6 +105,7 @@ export class AdsController {
 
   @Get('search')
   async searchAds(
+    @TokenDecorator() token: TokenDataDto,
     @Query(new ObjectValidationPipe(searchAdsValidator))
     { keyword, account, page, limit }: SearchAdsDto,
   ) {
@@ -113,7 +114,10 @@ export class AdsController {
 
     const [ads, wishList] = await Promise.all([
       this.adsService.atlasSearch<AdsDocument>({ page, limit }, key, path),
-      this.wishListService.wishListIds({ account, ref: 'ads' }),
+      this.wishListService.wishListIds({
+        account: token?.id,
+        reference: ResourceEnum.Ads,
+      }),
     ]);
 
     if (!(account && wishList[0])) return ads;
