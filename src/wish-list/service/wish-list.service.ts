@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { BaseService } from '../../../libs/utils/src/database/service/db.service';
 import { WishList } from '../model/wish-list.model';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
+import { Model } from 'mongoose';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 
 @Injectable()
 export class WishListService extends BaseService<WishList> {
@@ -12,7 +13,7 @@ export class WishListService extends BaseService<WishList> {
     super(WishListModel);
   }
 
-  async wishListIds(filter: FilterQuery<WishList>) {
+  async wishListIds(filter: { account: string; reference?: ResourceEnum }) {
     const wishList = await this.find(filter);
     if (!wishList[0]) return [];
 
