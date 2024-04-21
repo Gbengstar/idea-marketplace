@@ -17,7 +17,7 @@ import {
   createStoreValidator,
   updateStoreValidator,
 } from '../validator/store.validator';
-import { Store } from '../model/store.model';
+import { Store, StoreDocument } from '../model/store.model';
 import { CreateStoreGuard, UpdateStoreGuard } from '../guard/store.guard';
 import { SearchStoreDto } from '../dto/store.dto';
 import { FilterQuery, PipelineStage } from 'mongoose';
@@ -30,11 +30,15 @@ import { ViewResource } from '../../view/decorator/view.decorator';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { ViewEventGuard } from '../../view/guard/guard.view';
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
+import { FollowService } from '../../follow/service/follow.service';
 
 @Controller('store')
 export class StoreController {
   private readonly logger = new Logger(StoreController.name);
-  constructor(private readonly storeService: StoreService) {}
+  constructor(
+    private readonly storeService: StoreService,
+    private readonly followService: FollowService,
+  ) {}
 
   @Get()
   async getStore(@TokenDecorator() token: TokenDataDto) {
@@ -49,13 +53,29 @@ export class StoreController {
   @Get('landing-page')
   @ViewResource(ResourceEnum.Store)
   @UseGuards(ViewEventGuard)
-  landingPage(
+  async landingPage(
+    @TokenDecorator() token: TokenDataDto,
     @Query(new ObjectValidationPipe(landingPageSearchValidator))
     { page, limit, ...query }: SearchStoreDto,
   ) {
     const filter: FilterQuery<Store> = {};
     if ('id' in query) filter._id = query.id;
-    return this.storeService.paginatedResult({ page, limit }, filter, {});
+    const [stores, follow] = await Promise.all([
+      this.storeService.paginatedResult<StoreDocument>(
+        { page, limit },
+        filter,
+        {},
+      ),
+      this.followService.followingStoreIds(token?.id),
+    ]);
+
+    if (!(token || stores[0] || follow[0])) return stores;
+
+    for (const store of stores.foundItems) {
+      store.follow = follow.includes(store._id.toString());
+    }
+
+    return stores;
   }
 
   @Get('search')

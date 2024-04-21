@@ -63,7 +63,7 @@ export class AdsController {
       }),
     ]);
 
-    if (!(token && wishList[0])) return ads;
+    if (!(token || wishList[0])) return ads;
 
     for (const ad of ads.foundItems) {
       ad.wish = wishList.includes(ad._id.toString());
