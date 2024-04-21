@@ -26,6 +26,7 @@ import { TalentModule } from './talent/talent.module';
 import { ViewModule } from './view/view.module';
 import { OptionalTokenMiddleware } from '../libs/utils/src/token/middleware/optional-token.middleware';
 import { RevealModule } from './reveal/reveal.module';
+import { FollowModule } from './follow/follow.module';
 
 @Module({
   imports: [
@@ -67,6 +68,8 @@ import { RevealModule } from './reveal/reveal.module';
     ViewModule,
 
     RevealModule,
+
+    FollowModule,
   ],
   controllers: [AppController],
 })
@@ -89,6 +92,8 @@ export class AppModule implements NestModule {
       .forRoutes(
         { path: '/ads/landing-page', method: RequestMethod.GET },
         { path: '/ads/search', method: RequestMethod.GET },
+        { path: '/store/landing-page', method: RequestMethod.GET },
+        { path: '/store/search', method: RequestMethod.GET },
       );
 
     // TokenMiddleware;
