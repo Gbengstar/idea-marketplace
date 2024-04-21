@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { BaseService } from '../../../libs/utils/src/database/service/db.service';
 import { Ads, AdsDocument } from '../model/ads.model';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model, PipelineStage, Types } from 'mongoose';
+import { FilterQuery, Model, PipelineStage } from 'mongoose';
 import { SearchAdsDto } from '../dto/ads.dto';
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 
@@ -34,10 +34,6 @@ export class AdsService extends BaseService<Ads> {
         },
       },
     ];
-
-    if ('id' in query) {
-      filter._id = new Types.ObjectId(query.id);
-    }
 
     if ('negotiable' in query) {
       filter.negotiable = query.negotiable;
