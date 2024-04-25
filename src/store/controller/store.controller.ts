@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
   NotFoundException,
+  Param,
   Patch,
   Post,
   Query,
@@ -12,13 +14,21 @@ import {
 import { StoreService } from '../service/store.service';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
 import {
+  ObjectValidationPipe,
+  StringValidationPipe,
+} from '../../../libs/utils/src/pipe/validation.pipe';
+import {
+  addStoreLocationValidator,
   createStoreValidator,
   updateStoreValidator,
 } from '../validator/store.validator';
 import { Store, StoreDocument } from '../model/store.model';
-import { CreateStoreGuard, UpdateStoreGuard } from '../guard/store.guard';
+import {
+  CreateStoreGuard,
+  StoreLocationGuard,
+  UpdateStoreGuard,
+} from '../guard/store.guard';
 import { SearchStoreDto } from '../dto/store.dto';
 import { FilterQuery, PipelineStage } from 'mongoose';
 import {
@@ -31,6 +41,8 @@ import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { ViewEventGuard } from '../../view/guard/guard.view';
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 import { FollowService } from '../../follow/service/follow.service';
+import { Location, LocationDocument } from '../schema/location.schema';
+import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
 
 @Controller('store')
 export class StoreController {
@@ -116,7 +128,56 @@ export class StoreController {
     @Body(new ObjectValidationPipe(updateStoreValidator)) storeData: Store,
   ) {
     storeData.account = token.id;
-    this.logger.log({ storeData });
     return this.storeService.updateStore(storeData);
+  }
+
+  @Post('location')
+  @UseGuards(StoreLocationGuard)
+  async addStoreLocation(
+    @TokenDecorator() { id: account }: TokenDataDto,
+    @Body(new ObjectValidationPipe(addStoreLocationValidator))
+    location: Location,
+  ) {
+    return this.storeService.model.findOneAndUpdate(
+      { account },
+      { $push: { locations: location } },
+      { new: true },
+    );
+  }
+
+  @Patch('location/:id')
+  @UseGuards(StoreLocationGuard)
+  async updateStoreLocation(
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
+    @TokenDecorator() { id: account }: TokenDataDto,
+    @Body(new ObjectValidationPipe(addStoreLocationValidator))
+    updatedLocation: Location,
+  ) {
+    const store = await this.storeService.model.findOne({ account });
+    store.locations = store.locations.map((location: LocationDocument) => {
+      if (location._id.toString() === id) {
+        this.logger.debug('found');
+        return updatedLocation;
+      }
+      return location;
+    });
+
+    return store.save();
+  }
+
+  @Delete('location/:id')
+  @UseGuards(StoreLocationGuard)
+  async deleteStoreLocation(
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
+    @TokenDecorator() { id: account }: TokenDataDto,
+  ) {
+    const store = await this.storeService.model.findOne({ account });
+    store.locations = store.locations.filter(
+      (location: LocationDocument) => location._id.toString() !== id,
+    );
+
+    return store.save();
   }
 }
