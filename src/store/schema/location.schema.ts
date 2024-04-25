@@ -1,8 +1,8 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import { dbSchemaOptions } from '../../../libs/utils/src/database/config/db.config';
 import { BusinessHours } from '../dto/store.dto';
+import { Types, Document } from 'mongoose';
 
-@Schema(dbSchemaOptions)
+@Schema()
 export class Location {
   @Prop()
   storeName: string;
@@ -16,6 +16,8 @@ export class Location {
   @Prop()
   workingDays: string;
 
-  @Prop({ type: { from: String, To: String } })
+  @Prop({ type: { from: String, to: String } })
   businessHours: BusinessHours;
 }
+
+export type LocationDocument = Location & Document<Types.ObjectId>;

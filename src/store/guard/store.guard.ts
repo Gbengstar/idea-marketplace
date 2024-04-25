@@ -34,3 +34,17 @@ export class UpdateStoreGuard implements CanActivate {
     return true;
   }
 }
+
+@Injectable()
+export class StoreLocationGuard implements CanActivate {
+  constructor(private readonly storeService: StoreService) {}
+  async canActivate(context: ExecutionContext) {
+    const res = context.switchToHttp().getResponse();
+    const { id: account } = res.locals.tokenData as TokenDataDto;
+
+    if (!(await this.storeService.findOne({ account }))) {
+      throw new BadRequestException('create a store before adding a location');
+    }
+    return true;
+  }
+}
