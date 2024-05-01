@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  ObjectCannedACL,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class FileUploadService {
@@ -14,13 +18,14 @@ export class FileUploadService {
 
   constructor(private readonly configService: ConfigService) {
     this.bucket = this.configService.getOrThrow('AWS_S3_BUCKET');
-    this.s3Prefix = `https://s3.amazonaws.com/${this.bucket}`;
+    this.s3Prefix = `https://${this.bucket}.s3.eu-north-1.amazonaws.com`; //`https://s3.amazonaws.com/${this.bucket}`;
   }
 
   async fileUpload(file: Express.Multer.File, user: string) {
     const name = file.originalname.trim().replace(/\s+/g, '-');
     const Key = user + '/' + name;
     const input = {
+      ACL: ObjectCannedACL.public_read,
       Body: file.buffer,
       Bucket: this.bucket,
       Key,
