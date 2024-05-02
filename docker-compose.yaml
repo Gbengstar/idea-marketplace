@@ -1,0 +1,32 @@
+# version: '3.8'
+# services:
+#   tino:
+#     build:
+#       context: .
+
+#     ports:
+#       - '9090:9090'
+#     environment:
+#       - NODE_ENV=development
+#     volumes:
+#       - ./src:/src/src
+#     restart: unless-stopped
+# networks:
+#   app-network:
+#     driver: local
+services:
+  tino:
+    build:
+      dockerfile: Dockerfile.dev
+      context: .
+      # Only will build development stage from our dockerfile
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
+    # Run a command against the development stage of the image
+    command: npm run start:dev
+    ports:
+      - 9090:9090

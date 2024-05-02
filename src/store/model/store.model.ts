@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { dbSchemaOptions } from '../../../libs/utils/src/database/config/db.config';
-import { SchemaTypes } from 'mongoose';
+import { SchemaTypes, Document, Types } from 'mongoose';
 import { Location } from '../schema/location.schema';
 
 @Schema(dbSchemaOptions)
@@ -25,6 +25,9 @@ export class Store {
 
   @Prop({ type: [Location] })
   locations: Location[];
-}
 
+  @Prop({ default: false })
+  follow: boolean;
+}
+export type StoreDocument = Store & Document<Types.ObjectId>;
 export const StoreSchema = SchemaFactory.createForClass(Store);

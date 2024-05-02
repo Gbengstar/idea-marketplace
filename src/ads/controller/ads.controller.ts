@@ -1,9 +1,21 @@
-import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AdsService } from '../service/ads.service';
 import { Ads, AdsDocument } from '../model/ads.model';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
+import {
+  ObjectValidationPipe,
+  StringValidationPipe,
+} from '../../../libs/utils/src/pipe/validation.pipe';
 import {
   createAdsValidator,
   distinctAdsPropValidator,
@@ -11,7 +23,12 @@ import {
 } from '../validator/ads.validator';
 import { DistinctFilterDto, SearchAdsDto } from '../dto/ads.dto';
 import { WishListService } from '../../wish-list/service/wish-list.service';
-import { FilterQuery } from 'mongoose';
+import { ViewResource } from '../../view/decorator/view.decorator';
+import { ViewEventGuard } from '../../view/guard/guard.view';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
+import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
+import { FollowService } from '../../follow/service/follow.service';
+import { StoreDocument } from '../../store/model/store.model';
 
 @Controller('ads')
 export class AdsController {
@@ -19,7 +36,8 @@ export class AdsController {
 
   constructor(
     private readonly adsService: AdsService,
-    private readonly wishList: WishListService,
+    private readonly wishListService: WishListService,
+    private readonly followService: FollowService,
   ) {}
 
   @Post()
@@ -38,30 +56,48 @@ export class AdsController {
 
   @Get('landing-page')
   async landingPageAds(
+    @TokenDecorator() token: TokenDataDto,
     @Query(new ObjectValidationPipe(searchAdsValidator))
     { page, limit, ...query }: SearchAdsDto,
   ) {
-    const filter: FilterQuery<Ads> = {};
-    if ('condition' in query) filter.condition = query.condition;
-    if ('location' in query) filter.store.location = query.location;
-    if ('negotiable' in query) filter.negotiable = query.negotiable;
-    if ('verifiedVendor' in query)
-      filter.account.verified = query.verifiedVendor;
-
     const [ads, wishList] = await Promise.all([
-      this.adsService.paginatedResult<AdsDocument>(
-        { limit, page },
-        filter,
-        {},
-        'store category subCategory',
-      ),
-      this.wishList.findOne({ account: query.account }),
+      this.adsService.searchAds({ page, limit, ...query }),
+      this.wishListService.wishListIds({
+        account: token?.id,
+        reference: ResourceEnum.Ads,
+      }),
     ]);
 
-    if (!(query.account && wishList?.wishList[0])) return ads;
+    if (!(token || wishList[0])) return ads;
 
     for (const ad of ads.foundItems) {
-      ad.wish = wishList.wishList.includes(ad._id);
+      ad.wish = wishList.includes(ad._id.toString());
+    }
+
+    return ads;
+  }
+
+  @Get('landing-page/:id')
+  @ViewResource(ResourceEnum.Ads)
+  @UseGuards(ViewEventGuard)
+  async oneAds(
+    @TokenDecorator() token: TokenDataDto,
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
+  ) {
+    const [ads, wishList, follow] = await Promise.all([
+      this.adsService.findByIdOrErrorOut(id, [{ path: 'store' }]),
+      this.wishListService.wishListIds({
+        account: token?.id,
+        reference: ResourceEnum.Ads,
+      }),
+      this.followService.followingStoreIds(token?.id),
+    ]);
+
+    if (wishList[0]) ads.wish = wishList.includes(ads._id.toString());
+    if (follow[0]) {
+      const store = ads.store as unknown as StoreDocument;
+      store.follow = follow.includes(store._id.toString());
     }
 
     return ads;
@@ -69,29 +105,28 @@ export class AdsController {
 
   @Get('search')
   async searchAds(
+    @TokenDecorator() token: TokenDataDto,
     @Query(new ObjectValidationPipe(searchAdsValidator))
-    { keyword, account }: SearchAdsDto,
+    { keyword, account, page, limit }: SearchAdsDto,
   ) {
     const path = ['title', 'description', 'brandName', 'store'];
     const key = keyword || ' ';
 
     const [ads, wishList] = await Promise.all([
-      this.adsService.atlasSearch<AdsDocument>(key, path),
-      this.wishList.findOne({ account }),
+      this.adsService.atlasSearch<AdsDocument>({ page, limit }, key, path),
+      this.wishListService.wishListIds({
+        account: token?.id,
+        reference: ResourceEnum.Ads,
+      }),
     ]);
 
-    if (!(account && wishList?.wishList[0])) return ads;
+    if (!(account && wishList[0])) return ads;
 
-    for (const ad of ads) {
-      ad.wish = wishList.wishList.includes(ad._id);
+    for (const ad of ads.foundItems) {
+      ad.wish = wishList.includes(ad._id.toString());
     }
 
     return ads;
-  }
-
-  @Get()
-  autocomplete(@Body() ads: Ads) {
-    return this.adsService.create(ads);
   }
 
   @Get('distinct-properties')
@@ -100,5 +135,10 @@ export class AdsController {
     { distinct, ...filter }: DistinctFilterDto,
   ) {
     return this.adsService.model.distinct(distinct, filter);
+  }
+
+  @Get('/:id')
+  getAd(@Param('id') id: string) {
+    return this.adsService.findOne({ _id: id });
   }
 }

@@ -1,15 +1,14 @@
 import { SchemaTypes } from 'mongoose';
 import { dbSchemaOptions } from './../../../libs/utils/src/database/config/db.config';
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema(dbSchemaOptions)
-export class Education {
+export class Comment {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Account' })
   account: string;
 
   @Prop()
-  photo: string;
-
-  @Prop()
-  name: string;
+  comment: string;
 }
+
+export const CommentSchema = SchemaFactory.createForClass(Comment);

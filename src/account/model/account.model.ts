@@ -7,10 +7,10 @@ import { Store } from '../../store/model/store.model';
 
 @Schema(dbSchemaOptions)
 export class Account {
-  @Prop()
+  @Prop({ default: '' })
   firstName: string;
 
-  @Prop()
+  @Prop({ default: '' })
   lastName: string;
 
   @Prop({ index: true })
@@ -19,10 +19,10 @@ export class Account {
   @Prop()
   password: string;
 
-  @Prop()
+  @Prop({ default: '' })
   photo: string;
 
-  @Prop()
+  @Prop({ default: '' })
   whatsapp: string;
 
   @Prop({ type: Boolean })
@@ -39,6 +39,9 @@ export class Account {
 
   @Prop({ type: SchemaTypes.ObjectId, ref: Store.name })
   store: string;
+
+  @Prop()
+  pushToken: string;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

@@ -19,8 +19,8 @@ export const createAdsValidator = Joi.object<Ads>({
   title: Joi.string().required(),
   description: Joi.string().required(),
   images: Joi.array().min(5).items(Joi.string().required()),
+  publishedDate: Joi.date().default(new Date()),
 });
-
 export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
   distinct: Joi.string()
     .required()
@@ -38,9 +38,13 @@ export const searchAdsValidator = paginationValidator.append<SearchAdsDto>({
   keyword: Joi.string().trim(),
   account: objectIdValidator,
   location: Joi.string().trim(),
-  verifiedVendor: Joi.boolean(),
+  verified: Joi.boolean(),
   negotiable: Joi.boolean(),
   condition: Joi.string().trim(),
   category: objectIdValidator,
   subCategory: objectIdValidator,
+  price: Joi.object({
+    min: Joi.number(),
+    max: Joi.number().when('min', { then: Joi.required() }),
+  }),
 });

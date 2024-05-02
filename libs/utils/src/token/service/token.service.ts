@@ -4,6 +4,7 @@ import {
   HttpException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +17,7 @@ export class TokenService {
   private expiresIn: string;
   private tokenSecret: string;
   private refreshTokenExpiration: string;
+  private readonly logger = new Logger(TokenService.name);
 
   constructor(private config: ConfigService) {}
 
@@ -104,16 +106,24 @@ export class TokenService {
     return jwt.decode(token, { complete: true });
   }
 
-  static readonly getToken = (req: Request) => {
-    if (!req.headers.authorization?.startsWith('Bearer')) {
-      throw new BadRequestException('valid authorization token is required');
-    }
-    const authorizationHeader = req.headers.authorization;
-    const [, token] = authorizationHeader.split(' ');
+  getToken = (req: Request) => {
+    let token: string;
 
-    if (!token) {
-      throw new BadRequestException('please provide a valid JWT token');
+    switch (true) {
+      case !!req.headers.cookie:
+        req.headers.cookie.split('; ').forEach((item) => {
+          const data = item.split('=');
+          if (data[0] === 'token') token = data[1];
+        });
+        break;
+      case req.headers.authorization?.startsWith('Bearer'):
+        token = req.headers.authorization.split(' ')[1];
+        break;
+      case !!req.signedCookies?.token:
+        token = req.signedCookies?.token;
+        break;
     }
+
     return token;
   };
 }

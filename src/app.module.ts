@@ -23,6 +23,10 @@ import { WishListModule } from './wish-list/wish-list.module';
 import { PromotionModule } from './promotion/promotion.module';
 import { JobModule } from './job/job.module';
 import { TalentModule } from './talent/talent.module';
+import { ViewModule } from './view/view.module';
+import { OptionalTokenMiddleware } from '../libs/utils/src/token/middleware/optional-token.middleware';
+import { RevealModule } from './reveal/reveal.module';
+import { FollowModule } from './follow/follow.module';
 
 @Module({
   imports: [
@@ -60,11 +64,19 @@ import { TalentModule } from './talent/talent.module';
     JobModule,
 
     TalentModule,
+
+    ViewModule,
+
+    RevealModule,
+
+    FollowModule,
   ],
   controllers: [AppController],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // RequestLoggerMiddleware;
+
     consumer
       .apply(RequestLoggerMiddleware)
       .exclude({ path: '/api/v1', method: RequestMethod.GET })
@@ -72,6 +84,21 @@ export class AppModule implements NestModule {
         path: '*',
         method: RequestMethod.ALL,
       });
+
+    //  OptionalTokenMiddleware
+
+    consumer
+      .apply(OptionalTokenMiddleware)
+      .forRoutes(
+        { path: '/ads/landing-page', method: RequestMethod.GET },
+        { path: '/ads/landing-page/:id', method: RequestMethod.GET },
+        { path: '/ads/search', method: RequestMethod.GET },
+        { path: '/store/landing-page', method: RequestMethod.GET },
+        { path: '/store/search', method: RequestMethod.GET },
+      );
+
+    // TokenMiddleware;
+
     consumer
       .apply(TokenMiddleware)
       .exclude(
@@ -91,14 +118,26 @@ export class AppModule implements NestModule {
           path: '/api/v1/auth/vendor/google-login',
           method: RequestMethod.POST,
         },
-        { path: '/api/v1/store/search', method: RequestMethod.GET },
-        { path: '/api/v1/ads/search', method: RequestMethod.GET },
+        {
+          path: '/api/v1/account/open-files-upload',
+          method: RequestMethod.POST,
+        },
         { path: '/api/v1/promotion', method: RequestMethod.GET },
-        { path: '/api/v1/store/landing-page', method: RequestMethod.GET },
         { path: '/api/v1/ads/landing-page', method: RequestMethod.GET },
+        { path: 'api/v1/ads/landing-page/:id', method: RequestMethod.GET },
+        { path: '/api/v1/ads/search', method: RequestMethod.GET },
+        { path: '/api/v1/store/landing-page', method: RequestMethod.GET },
+        { path: '/api/v1/store/search', method: RequestMethod.GET },
         { path: '/api/v1/job/landing-page', method: RequestMethod.GET },
+        { path: '/api/v1/job/search', method: RequestMethod.GET },
+        { path: '/api/v1/talent/landing-page', method: RequestMethod.GET },
+        { path: '/api/v1/talent/search', method: RequestMethod.GET },
         { path: '/api/v1/catalog/category', method: RequestMethod.GET },
         { path: '/api/v1/catalog/sub-category', method: RequestMethod.GET },
+        { path: '/api/v1/review', method: RequestMethod.GET },
+        { path: '/api/v1/review/rating-analysis', method: RequestMethod.GET },
+        { path: '/api/v1/view', method: RequestMethod.GET },
+        { path: '/api/v1/search', method: RequestMethod.GET },
       )
       .forRoutes({
         path: '*',

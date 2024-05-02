@@ -1,58 +1,126 @@
-import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { WishListService } from '../service/wish-list.service';
-import { StringValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
+import {
+  ObjectValidationPipe,
+  StringValidationPipe,
+} from '../../../libs/utils/src/pipe/validation.pipe';
 import { stringValidator } from '../../../libs/utils/src/validator/custom.validator';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
-import { Types } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
+import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
+import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
+import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
+import { Ads } from '../../ads/model/ads.model';
+import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
+import { searchAdsValidator } from '../../ads/validator/ads.validator';
+import { AdsService } from '../../ads/service/ads.service';
+import { SearchAdsDto } from '../../ads/dto/ads.dto';
+import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 
 @Controller('wish-list')
 export class WishListController {
-  constructor(private readonly wishListService: WishListService) {}
+  private readonly logger = new Logger(WishListController.name);
 
-  @Post()
+  constructor(
+    private readonly wishListService: WishListService,
+    private readonly adsService: AdsService,
+  ) {}
+
+  @Post('ads')
   async addToWishList(
     @Body('ads', new StringValidationPipe(stringValidator.required()))
     ads: string,
     @TokenDecorator() { id }: TokenDataDto,
   ) {
-    const wishList = await this.wishListService.findOneOrCreate(
-      { account: id },
-      { account: id },
-    );
-    const list = wishList.wishList.map((wishList) => wishList.toString());
-    wishList.wishList = [
-      ...new Set([ads, ...list]),
-    ] as unknown as Types.ObjectId[];
-    return wishList.save();
+    const wish = await this.wishListService.findOne({
+      account: id,
+      wish: new Types.ObjectId(ads),
+    });
+
+    if (wish) return wish;
+
+    return this.wishListService.create({
+      account: id,
+      reference: ResourceEnum.Ads,
+      wish: new Types.ObjectId(ads),
+    });
   }
 
-  @Get()
-  async getWishList(@TokenDecorator() { id }: TokenDataDto) {
-    const wishList = await this.wishListService.findOneOrCreate(
-      { account: id },
-      { account: id },
-    );
-
-    return wishList.populate([
-      { path: 'wishList', populate: { path: 'store' } },
-    ]);
-  }
-
-  @Patch()
-  async removeFromWishList(
-    @Body('ads', new StringValidationPipe(stringValidator.required()))
-    ads: string,
+  @Get('ads')
+  async getWishList(
     @TokenDecorator() { id }: TokenDataDto,
+    @Query(new ObjectValidationPipe(paginationValidator))
+    paginate: PaginationDto,
   ) {
-    const wishList = await this.wishListService.findOneOrCreate(
-      { account: id },
-      { account: id },
-    );
-    wishList.wishList = wishList.wishList.filter(
-      (wishList) => wishList.toString() !== ads,
-    );
+    const wishIds = await this.wishListService.wishListIds({ account: id });
 
-    return wishList.save();
+    return this.adsService
+      .paginatedResult(
+        paginate,
+        { _id: { $in: wishIds } },
+        {
+          createdAt: -1,
+        },
+      )
+      .then((ads) => {
+        ads.foundItems = ads.foundItems.map((ad: Ads) => {
+          ad.wish = true;
+          return ad;
+        });
+
+        return ads;
+      });
+  }
+
+  @Get('ads-search')
+  async searchWishList(
+    @TokenDecorator() { id: account }: TokenDataDto,
+    @Query(new ObjectValidationPipe(searchAdsValidator))
+    { keyword, limit, page }: SearchAdsDto,
+  ) {
+    const wishIds = await this.wishListService.wishListIds({ account });
+    const query = regexQuery(keyword);
+
+    const filter: FilterQuery<Ads> = {
+      _id: { $in: wishIds },
+      $or: [
+        { location: query },
+        { description: query },
+        { title: query },
+        { condition: query },
+        { brandName: query },
+      ],
+    };
+
+    return this.adsService
+      .paginatedResult({ limit, page }, filter, {
+        createdAt: -1,
+      })
+      .then((ads) => {
+        ads.foundItems = ads.foundItems.map((ad: Ads) => {
+          ad.wish = true;
+          return ad;
+        });
+
+        return ads;
+      });
+  }
+
+  @Delete('ads')
+  async deleteWishList(
+    @Query('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
+    @TokenDecorator() { id: account }: TokenDataDto,
+  ) {
+    return this.wishListService.model.deleteOne({ account, wish: id });
   }
 }

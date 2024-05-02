@@ -16,6 +16,7 @@ import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.de
 import { updateAccountDetails } from '../validator/account.validator';
 import { Account } from '../model/account.model';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { SharpService } from '../../../libs/utils/src/file-upload/service/sharp.service';
 
 @Controller('account')
 export class AccountController {
@@ -24,6 +25,7 @@ export class AccountController {
   constructor(
     private readonly accountService: AccountService,
     private readonly fileUploadService: FileUploadService,
+    private readonly sharpService: SharpService,
   ) {}
 
   @Get()
@@ -36,8 +38,7 @@ export class AccountController {
     @Body(new ObjectValidationPipe(updateAccountDetails)) account: Account,
     @TokenDecorator() { id }: TokenDataDto,
   ) {
-    await this.accountService.updateByIdErrorOut(id, account);
-    return { message: 'profile updated' };
+    return this.accountService.updateByIdErrorOut(id, account);
   }
 
   @Post('upload-files')
@@ -51,7 +52,34 @@ export class AccountController {
     @TokenDecorator() { id }: TokenDataDto,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    this.logger.debug(files);
+    const width = 600;
+    for (const file of files) {
+      const metadata = await this.sharpService.metadata(file.buffer);
+      const { height } = this.sharpService.calculateNewHeight(
+        metadata.height,
+        metadata.width,
+        width,
+      );
+      const buffer = await this.sharpService.resize(
+        { width, height, fit: 'cover' },
+        file.buffer,
+      );
+
+      file.buffer = await this.sharpService.compositeWaterMarkImage(buffer);
+    }
     return this.fileUploadService.fileUploadMany(files, id);
+  }
+
+  @Post('open-files-upload')
+  @UseInterceptors(
+    FilesInterceptor('file[]', 6, {
+      limits: { fieldSize: 6, fileSize: 5000000 },
+    }),
+  )
+  async freeFileUpload(
+    @Body(new ObjectValidationPipe(updateAccountDetails)) account: Account,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.fileUploadService.fileUploadMany(files, 'assets');
   }
 }

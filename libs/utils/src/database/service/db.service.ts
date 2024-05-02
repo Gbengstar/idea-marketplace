@@ -18,7 +18,6 @@ import {
   Document,
   Types,
 } from 'mongoose';
-import { PaginationResponseDto } from '@app/utils/dto/paginate.dto';
 import { DateTime } from 'luxon';
 
 @Injectable()
@@ -68,33 +67,43 @@ export abstract class BaseService<C> {
     );
   }
   async paginatedResult<T>(
-    paginateData: Partial<PaginationDto>,
+    paginateData: PaginationDto,
     filter: FilterQuery<C>,
     sort?: string | { [key: string]: SortOrder },
-    population?: Array<PopulateOptions> | any,
-  ): Promise<PaginationResponseDto<T>> {
+    population?: Array<PopulateOptions>,
+  ) {
     const { limit, page } = paginateData;
     const [foundItems, count] = await Promise.all([
       this.model
         .find<T>(filter)
         .skip((page - 1) * limit)
         .sort(sort ?? { createdAt: -1 })
-        .limit(limit + 2)
+        .limit(limit)
         .populate(population),
       this.model.countDocuments(filter),
     ]);
 
-    const totalPages = Math.ceil(count / limit);
+    return this.paginateResponse(paginateData, foundItems, count);
+  }
 
-    const nextPage =
-      count > limit ? (page < totalPages ? page + 1 : null) : null;
-    return {
-      limit,
-      nextPage,
-      currentPage: page,
-      totalNumberOfItems: count,
-      foundItems,
-    };
+  async paginatedResultAverage<T>(
+    paginateData: PaginationDto,
+    filter: FilterQuery<C>,
+    averageField: string,
+    sort?: string | { [key: string]: SortOrder },
+    population?: Array<PopulateOptions>,
+  ) {
+    const [paginateResponse, [average]] = await Promise.all([
+      this.paginatedResult<T>(paginateData, filter, sort, population),
+      this.model.aggregate<{ average: number }>([
+        { $match: filter },
+        { $group: { _id: null, average: { $avg: `$${averageField}` } } },
+      ]),
+    ]);
+
+    paginateResponse[`average${averageField}`] =
+      +average?.average.toFixed(2) ?? 0;
+    return paginateResponse;
   }
 
   dateFormatter(date: Date) {
@@ -565,13 +574,13 @@ export abstract class BaseService<C> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  aggregatePagination = async (
+  async aggregatePagination<T = C>(
     pg: PaginationDto,
     aggregate: PipelineStage[],
     sort?: Record<string, 1 | -1>,
-  ) => {
+  ) {
     const [foundItems, [countData]] = await Promise.all([
-      this.model.aggregate<C>([
+      this.model.aggregate<T>([
         ...aggregate,
         { $limit: pg.limit },
         { $skip: (pg.page - 1) * pg.limit },
@@ -583,7 +592,92 @@ export abstract class BaseService<C> {
       ]),
     ]);
 
-    const count = countData?.count ?? 0;
+    return this.paginateResponse(pg, foundItems, countData?.count ?? 0);
+  }
+
+  aggregatePaginationSum = async (
+    pg: PaginationDto,
+    aggregate: PipelineStage[],
+    sumField: string,
+    sort?: Record<string, 1 | -1>,
+  ) => {
+    const [pageData, [sum]] = await Promise.all([
+      this.aggregatePagination(pg, aggregate, sort),
+      this.model.aggregate<{ sum: number }>([
+        ...aggregate,
+        { $group: { _id: null, sum: { $sum: `$${sumField}` } } },
+      ]),
+    ]);
+    return { sum: sum?.sum ?? 0, ...pageData };
+  };
+
+  aggregatePaginationAverage = async (
+    pg: PaginationDto,
+    aggregate: PipelineStage[],
+    averageField: string,
+    sort?: Record<string, 1 | -1>,
+  ) => {
+    const [pageData, [average]] = await Promise.all([
+      this.aggregatePagination(pg, aggregate, sort),
+      this.model.aggregate<{ average: number }>([
+        ...aggregate,
+        { $group: { _id: null, average: { $avg: `$${averageField}` } } },
+      ]),
+    ]);
+
+    pageData[`average${averageField}`] = average?.average ?? 0;
+    return pageData;
+  };
+
+  async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
+    const data = await this.model.findOne(filter);
+    if (data) return data;
+    return this.model.create(createData || {});
+  }
+
+  async atlasSearch<T = any>(
+    pg: PaginationDto,
+    text: string,
+    path: string[],
+    sort?: Record<string, 1 | -1>,
+  ) {
+    const escapedText = (text || '').replace(
+      /[-\/\\^$*+?.():|{}\[\]]/g,
+      '\\$&',
+    );
+    const search: PipelineStage = {
+      $search: {
+        text: {
+          query: escapedText,
+          path,
+          fuzzy: {
+            maxEdits: 2,
+          },
+        },
+        count: {
+          type: 'total',
+        },
+      },
+    };
+    const [foundItems, [countData]] = await Promise.all([
+      this.model.aggregate<T>([
+        search,
+        { $limit: pg.limit },
+        { $skip: (pg.page - 1) * pg.limit },
+        { $sort: sort ?? { createdAt: -1 } },
+      ]),
+      this.model.aggregate<{ count: number }>([search, { $count: 'count' }]),
+    ]);
+
+    return this.paginateResponse(pg, foundItems, countData?.count ?? 0);
+  }
+
+  private paginateResponse<T>(
+    pg: PaginationDto,
+    foundItems: T[],
+    itemCount: number,
+  ) {
+    const count = itemCount ?? 0;
     const totalPages = Math.ceil(count / pg.limit);
     const nextPage = pg.page + 1 > totalPages ? null : pg.page + 1;
     return {
@@ -594,31 +688,5 @@ export abstract class BaseService<C> {
       currentPage: pg.page,
       foundItems,
     };
-  };
-
-  async findOneOrCreate(filter: FilterQuery<C>, createData?: Partial<C>) {
-    const data = await this.model.findOne(filter);
-    if (data) return data;
-    return this.model.create(createData || {});
-  }
-
-  atlasSearch<T = any>(text: string, path: string[]) {
-    const escapedText = text.replace(/[-\/\\^$*+?.():|{}\[\]]/g, '\\$&');
-    return this.model.aggregate<T>([
-      {
-        $search: {
-          text: {
-            query: escapedText,
-            path,
-            fuzzy: {
-              maxEdits: 2,
-            },
-          },
-          count: {
-            type: 'total',
-          },
-        },
-      },
-    ]);
   }
 }

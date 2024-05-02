@@ -6,4 +6,5 @@ export const updateAccountDetails = Joi.object<Account>({
   firstName: Joi.string(),
   lastName: Joi.string(),
   whatsapp: Joi.string(),
+  pushToken: Joi.string(),
 });

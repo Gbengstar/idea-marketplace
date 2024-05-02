@@ -14,7 +14,11 @@ export class TokenMiddleware implements NestMiddleware {
   constructor(private readonly tokenService: TokenService) {}
   async use(req: Request, res: Response, next: NextFunction) {
     try {
-      const token = TokenService.getToken(req);
+      const token = this.tokenService.getToken(req);
+
+      if (!token) {
+        throw new BadRequestException('please provide a valid token');
+      }
       const tokenData = await this.tokenService.verifyToken(token);
 
       if (!tokenData) {
@@ -26,7 +30,7 @@ export class TokenMiddleware implements NestMiddleware {
       next();
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException();
+      throw new BadGatewayException(error.message);
     }
   }
 }
