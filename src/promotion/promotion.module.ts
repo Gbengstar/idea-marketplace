@@ -12,6 +12,8 @@ import { PromotionConfigurationService } from './service/promotion-config.servic
 import { TalentModule } from '../talent/talent.module';
 import { AdsModule } from '../ads/ads.module';
 import { JobModule } from '../job/job.module';
+// import { JobService } from '../job/service/job.service';
+// import { Job, JobSchema } from '../job/model/job.model';
 
 @Module({
   controllers: [PromotionController],
@@ -19,6 +21,7 @@ import { JobModule } from '../job/job.module';
     PromotionService,
     AccountPromotionService,
     PromotionConfigurationService,
+    // JobService,
   ],
   imports: [
     TalentModule,
@@ -27,6 +30,7 @@ import { JobModule } from '../job/job.module';
     MongooseModule.forFeatureAsync([
       { name: Promotion.name, useFactory: () => PromotionSchema },
       { name: AccountPromotion.name, useFactory: () => AccountPromotionSchema },
+      // { name: Job.name, useFactory: () => JobSchema },
     ]),
   ],
 })

@@ -7,6 +7,8 @@ import {
   StringSchema,
 } from 'joi';
 
+import * as Joi from 'joi';
+
 @Injectable()
 export class ObjectValidationPipe implements PipeTransform {
   constructor(private readonly schema: ObjectSchema) {}
@@ -54,10 +56,10 @@ export class StringValidationPipe implements PipeTransform {
 
 @Injectable()
 export class BooleanValidationPipe implements PipeTransform {
-  constructor(private readonly schema: BooleanSchema) {}
-  async transform(data: any): Promise<any> {
+  // constructor(private readonly schema: BooleanSchema) {}
+  async transform(data: any): Promise<boolean> {
     try {
-      const value = await this.schema.validateAsync(data);
+      const value = await Joi.boolean().validateAsync(data);
       return value;
     } catch (e) {
       throw new BadRequestException(e.message);
