@@ -21,9 +21,7 @@ export class FileUploadService {
     this.s3Prefix = `https://${this.bucket}.s3.eu-north-1.amazonaws.com`; //`https://s3.amazonaws.com/${this.bucket}`;
   }
 
-  async fileUpload(file: Express.Multer.File, user: string) {
-    const name = file.originalname.trim().replace(/\s+/g, '-');
-    const Key = user + '/' + name;
+  async fileUpload(file: Express.Multer.File, user: string, Key: string) {
     const input = {
       ACL: ObjectCannedACL.public_read,
       Body: file.buffer,
@@ -43,10 +41,24 @@ export class FileUploadService {
 
   async fileUploadMany(files: Express.Multer.File[], user: string) {
     const output: { location: string; fileName: string }[] = [];
+    const promiseList = [];
     for await (const file of files) {
-      const uploadedFile = await this.fileUpload(file, user);
-      output.push(uploadedFile);
+      const name = file.originalname.trim().replace(/\s+/g, '-');
+      const Key = user + '/' + name;
+      const awaitingUpload = this.fileUpload(file, user, Key);
+      promiseList.push(awaitingUpload);
+
+      output.push({
+        location: `${this.s3Prefix}/${Key}`,
+        fileName: file.originalname,
+      });
     }
+
+    await Promise.all(promiseList);
     return output;
+  }
+
+  getImagesLinks(images: { location: string; fileName: string }[]) {
+    return images.map((image) => image.location);
   }
 }

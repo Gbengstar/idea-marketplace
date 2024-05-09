@@ -47,14 +47,16 @@ export class SharpService {
     return { height: newHeight };
   }
 
-  async compositeWaterMarkImage(image: Buffer) {
+  async compositeWaterMarkImage(image: Buffer, watermarkText: string) {
     const text: CreateText = {
-      text: '<span foreground="red" size="32pt">HELLO WORLD</span>',
-      font: 'Comic Sans',
-      fontfile: __dirname + '/COMICSANS.TTF',
-      justify: true,
-      width: 600,
+      text: `<span foreground="white" size="24pt">Sold on Tino.ng By</span>
+      <span foreground="white" size="12pt">${watermarkText}</span>`,
+      font: 'DM Sans',
+      fontfile: __dirname + '/DMSans-Medium.ttf',
+      align: 'centre',
+      width: 300,
       rgba: true,
+      spacing: 2,
     };
 
     this.logger.debug({ fontline: text.fontfile });
@@ -62,5 +64,25 @@ export class SharpService {
     return await sharp(image)
       .composite([{ input: { text } }])
       .toBuffer();
+  }
+
+  async processAdsImage(files: Express.Multer.File[], storeName: string) {
+    const text = `${storeName}`;
+    const width = 600;
+    for (const file of files) {
+      const metadata = await this.metadata(file.buffer);
+      const { height } = this.calculateNewHeight(
+        metadata.height,
+        metadata.width,
+        width,
+      );
+      const buffer = await this.resize(
+        { width, height, fit: 'inside' },
+        file.buffer,
+      );
+
+      file.buffer = await this.compositeWaterMarkImage(buffer, text);
+    }
+    return files;
   }
 }
