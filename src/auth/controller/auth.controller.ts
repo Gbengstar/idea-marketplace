@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OtpService } from './../../../libs/utils/src/otp/services/otp.service';
 import {
   BadRequestException,
@@ -45,6 +46,7 @@ import { emailValidator } from '../../../libs/utils/src/validator/custom.validat
 import { returnOnDev } from '../../../libs/utils/src/general/function/general.function';
 import { GoogleOauthService } from '../../../libs/utils/src/google-oauth/service/google-oauth.service';
 import { Response } from 'express';
+import { ConfigurationEventEnum } from '../../configuration/dto/configuration.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -55,6 +57,7 @@ export class AuthController {
     private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
     private readonly googleOauthService: GoogleOauthService,
+    private readonly EventEmitter: EventEmitter2,
   ) {}
 
   @Post('vendor/google-sign-up')
@@ -162,6 +165,11 @@ export class AuthController {
       account.save(),
     ]);
 
+    this.EventEmitter.emit(
+      ConfigurationEventEnum.CREATE_CONFIGURATION_EVENT,
+      account._id.toString(),
+    );
+
     return { accessToken };
   }
 
@@ -232,6 +240,11 @@ export class AuthController {
       email: account.email,
     };
 
+    this.EventEmitter.emit(
+      ConfigurationEventEnum.CREATE_CONFIGURATION_EVENT,
+      account._id.toString(),
+    );
+
     const accessToken = await this.tokenService.signToken(tokenData);
 
     response.cookie(
@@ -267,6 +280,11 @@ export class AuthController {
     };
 
     const accessToken = await this.tokenService.signToken(tokenData);
+
+    this.EventEmitter.emit(
+      ConfigurationEventEnum.CREATE_CONFIGURATION_EVENT,
+      account._id.toString(),
+    );
 
     return { accessToken, account };
   }

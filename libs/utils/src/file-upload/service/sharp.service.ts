@@ -49,17 +49,15 @@ export class SharpService {
 
   async compositeWaterMarkImage(image: Buffer, watermarkText: string) {
     const text: CreateText = {
-      text: `<span foreground="white" size="24pt">Sold on Tino.ng By</span>
-      <span foreground="white" size="12pt">${watermarkText}</span>`,
+      text: `<span foreground="white" size="34.1pt"><b>Sold on Tino.ng By</b></span>
+      <span foreground="white" size="16pt">${watermarkText}</span>`,
       font: 'DM Sans',
       fontfile: __dirname + '/DMSans-Medium.ttf',
       align: 'centre',
       width: 300,
       rgba: true,
-      spacing: 2,
+      // spacing: 2,
     };
-
-    this.logger.debug({ fontline: text.fontfile });
 
     return await sharp(image)
       .composite([{ input: { text } }])

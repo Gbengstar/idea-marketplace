@@ -1,3 +1,4 @@
+import { ConfigurationService } from './../../configuration/service/configuration.service';
 import {
   Body,
   Controller,
@@ -5,6 +6,7 @@ import {
   Logger,
   NotAcceptableException,
   NotFoundException,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -12,7 +14,10 @@ import { ReviewService } from '../service/review.service';
 import { Review } from '../model/review.model';
 import { FilterQuery, PipelineStage, Types } from 'mongoose';
 import { GetItemReviewsDto, ReplyReviewsDto } from '../dto/review.dto';
-import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
+import {
+  BooleanValidationPipe,
+  ObjectValidationPipe,
+} from '../../../libs/utils/src/pipe/validation.pipe';
 import {
   createReviewValidator,
   replyReviewValidator,
@@ -24,6 +29,9 @@ import { AdsService } from '../../ads/service/ads.service';
 import { CommentService } from '../service/comment.service';
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { TalentService } from '../../talent/service/talent.service';
+import { Promotion } from '../../promotion/model/promotion.model';
+import { PromotionTypeEnum } from '../../promotion/enum/promotion.enum';
+// import { AccountPromotionService } from '../../promotion/service/account-promotion.service';
 
 @Controller('review')
 export class ReviewController {
@@ -34,7 +42,45 @@ export class ReviewController {
     private readonly adsService: AdsService,
     private readonly talentService: TalentService,
     private readonly commentService: CommentService,
+    private readonly configurationService: ConfigurationService, // private readonly accountPromotionService: AccountPromotionService,
   ) {}
+
+  @Get('configuration')
+  async reviewSetting(@TokenDecorator() { id }: TokenDataDto) {
+    return this.reviewService.allowReviewConfiguration(id);
+  }
+
+  @Patch('configuration')
+  async changeReviewSetting(
+    @TokenDecorator() { id }: TokenDataDto,
+    @Body('allowReview', new BooleanValidationPipe()) allowReview: boolean,
+  ) {
+    const reviewConfig = { allowReview: true };
+
+    const [subscription, configuration] = await Promise.all([
+      this.reviewService.lastSubscription(id),
+      this.configurationService.findOrCreateConfiguration(id),
+    ]);
+    if (!subscription) return reviewConfig;
+
+    const promotion = subscription.promotion as unknown as Promotion;
+
+    this.logger.debug({ promotion });
+
+    switch (promotion.name) {
+      case PromotionTypeEnum.GOLD:
+      case PromotionTypeEnum.PLATINUM:
+        {
+          configuration.allowReview = allowReview;
+          reviewConfig.allowReview = allowReview;
+          await configuration.save();
+        }
+
+        break;
+    }
+
+    return reviewConfig;
+  }
 
   @Post()
   async createReview(
@@ -62,6 +108,14 @@ export class ReviewController {
       throw new NotAcceptableException(
         `you are not allowed to review your ${review.reference}`,
       );
+    }
+
+    const { allowReview } = await this.reviewService.allowReviewConfiguration(
+      accountItem.account.toString(),
+    );
+
+    if (!allowReview) {
+      throw new NotAcceptableException(`account not allowing review this time`);
     }
 
     const comment = new this.commentService.model({
