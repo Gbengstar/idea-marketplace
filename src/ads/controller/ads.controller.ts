@@ -1,3 +1,4 @@
+import { SharpService } from './../../../libs/utils/src/file-upload/service/sharp.service';
 import {
   Body,
   Controller,
@@ -6,7 +7,9 @@ import {
   Param,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AdsService } from '../service/ads.service';
 import { Ads, AdsDocument } from '../model/ads.model';
@@ -29,6 +32,9 @@ import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
 import { FollowService } from '../../follow/service/follow.service';
 import { StoreDocument } from '../../store/model/store.model';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { StoreService } from '../../store/service/store.service';
+import { FileUploadService } from '../../../libs/utils/src/file-upload/service/file-upload.service';
 
 @Controller('ads')
 export class AdsController {
@@ -38,6 +44,9 @@ export class AdsController {
     private readonly adsService: AdsService,
     private readonly wishListService: WishListService,
     private readonly followService: FollowService,
+    private readonly sharpService: SharpService,
+    private readonly storeService: StoreService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   @Post()
@@ -47,6 +56,26 @@ export class AdsController {
   ) {
     ads.account = id;
     return this.adsService.create(ads);
+  }
+
+  @Post('/water-marked-images')
+  @UseInterceptors(
+    FilesInterceptor('file[]', 6, {
+      limits: { fieldSize: 6, fileSize: 5000000 },
+    }),
+  )
+  async uploadAdsImage(
+    @TokenDecorator() { id }: TokenDataDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const storeName = await this.storeService.getStoreNameByAccount(id);
+
+    files = await this.sharpService.processAdsImage(
+      files,
+      storeName.toUpperCase(),
+    );
+
+    return this.fileUploadService.fileUploadMany(files, id);
   }
 
   @Get()
