@@ -9,7 +9,7 @@ import { AdsService } from '../ads/service/ads.service';
 import { Ads, AdsSchema } from '../ads/model/ads.model';
 import { TalentService } from '../talent/service/talent.service';
 import { Talent, TalentSchema } from '../talent/model/talent.model';
-import { AccountPromotionService } from '../promotion/service/account-promotion.service';
+
 import {
   AccountPromotion,
   AccountPromotionSchema,
@@ -18,13 +18,7 @@ import { ConfigurationModule } from '../configuration/configuration.module';
 
 @Module({
   controllers: [ReviewController],
-  providers: [
-    ReviewService,
-    CommentService,
-    AdsService,
-    TalentService,
-    // AccountPromotionService,
-  ],
+  providers: [ReviewService, CommentService, AdsService, TalentService],
   imports: [
     ConfigurationModule,
     MongooseModule.forFeatureAsync([
