@@ -31,4 +31,9 @@ export class ConfigurationService extends BaseService<Configuration> {
 
     return config;
   }
+
+  async getConfiguration(key: keyof Configuration, account: string) {
+    const config = await this.findOneOrErrorOut({ account });
+    return config[key];
+  }
 }

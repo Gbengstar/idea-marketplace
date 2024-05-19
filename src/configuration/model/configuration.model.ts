@@ -8,6 +8,18 @@ export class Configuration {
 
   @Prop({ default: true })
   allowReview: boolean;
+
+  @Prop({ default: true })
+  wishList: boolean;
+
+  @Prop({ default: true })
+  phoneNumberClick: boolean;
+
+  @Prop({ default: true })
+  whatsAppClick: boolean;
+
+  @Prop({ default: true })
+  following: boolean;
 }
 
 export type ConfigurationDocument = Configuration & Document;
