@@ -1,12 +1,5 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
-import {
-  ArraySchema,
-  BooleanSchema,
-  NumberSchema,
-  ObjectSchema,
-  StringSchema,
-} from 'joi';
-
+import { ArraySchema, NumberSchema, ObjectSchema, StringSchema } from 'joi';
 import * as Joi from 'joi';
 
 @Injectable()
@@ -56,7 +49,6 @@ export class StringValidationPipe implements PipeTransform {
 
 @Injectable()
 export class BooleanValidationPipe implements PipeTransform {
-  // constructor(private readonly schema: BooleanSchema) {}
   async transform(data: any): Promise<boolean> {
     try {
       const value = await Joi.boolean().validateAsync(data);
