@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ResizeOptions, CreateText } from 'sharp';
 import * as sharp from 'sharp';
+import { Buffer } from 'node:buffer';
+import { raw } from '@nestjs/mongoose';
 
 @Injectable()
 export class SharpService {
@@ -47,20 +49,39 @@ export class SharpService {
     return { height: newHeight };
   }
 
-  async compositeWaterMarkImage(image: Buffer, watermarkText: string) {
-    const text: CreateText = {
-      text: `<span foreground="white" size="34.1pt"><b>Sold on Tino.ng By</b></span>
+  async createWaterMarkTextImage(watermarkText: string) {
+    return sharp({
+      text: {
+        text: `<span foreground="white" size="34.1pt"><b>Sold on Tino.ng By</b></span>
       <span foreground="white" size="16pt">${watermarkText}</span>`,
-      font: 'DM Sans',
-      fontfile: __dirname + '/DMSans-Medium.ttf',
-      align: 'centre',
-      width: 300,
-      rgba: true,
-      // spacing: 2,
-    };
+        font: 'DM Sans',
+        fontfile: __dirname + '/DMSans-Medium.ttf',
+        align: 'centre',
+        width: 300,
+        rgba: true,
+      },
+    })
+      .composite([
+        {
+          input: Buffer.from([0, 0, 0, 128]),
+          raw: {
+            width: 1,
+            height: 1,
+            channels: 4,
+          },
+          tile: true,
+          blend: 'dest-in',
+        },
+      ])
+      .toFormat('png')
+      .toBuffer();
+  }
 
+  async createWaterMarkImage(image: Buffer, watermarkText: string) {
     return await sharp(image)
-      .composite([{ input: { text } }])
+      .composite([
+        { input: await this.createWaterMarkTextImage(watermarkText) },
+      ])
       .toBuffer();
   }
 
@@ -79,7 +100,7 @@ export class SharpService {
         file.buffer,
       );
 
-      file.buffer = await this.compositeWaterMarkImage(buffer, text);
+      file.buffer = await this.createWaterMarkImage(buffer, text);
     }
     return files;
   }
