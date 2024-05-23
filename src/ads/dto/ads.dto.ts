@@ -13,4 +13,8 @@ export type SearchAdsDto = PaginationDto & {
   condition: string;
   category: string;
   subCategory: string;
+  sortBy: string;
+  orderBy: 1 | -1;
 };
+
+export type AvailableAdsDto = { ids: string[]; available: boolean };

@@ -24,3 +24,13 @@ export enum BusinessHoursEnum {
   TenPM = '10:00 PM',
   ElevenPM = '11:00 PM',
 }
+
+export enum WorkingDaysEnum {
+  Mon = 'Mon',
+  Tue = 'Tue',
+  Wed = 'Wed',
+  Thu = 'Thu',
+  Fri = 'Fri',
+  Sat = 'Sat',
+  Sun = 'Sun',
+}
