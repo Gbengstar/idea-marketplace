@@ -31,4 +31,10 @@ export class StoreService extends BaseService<Store> {
       { ...updateData, ...data },
     );
   }
+
+  async getStoreNameByAccount(account: string) {
+    return this.findOneOrErrorOut({ account }).then(
+      (store) => store.businessName,
+    );
+  }
 }

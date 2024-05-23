@@ -16,7 +16,11 @@
     "webpack": true,
     "assets": [
       {
-        "include": "**/*.TTF",
+        "include": "**/*.ttf",
+        "watchAssets": true
+      },
+      {
+        "include": "**/*.jpg",
         "watchAssets": true
       }
     ]

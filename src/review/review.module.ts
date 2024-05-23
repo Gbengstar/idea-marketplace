@@ -10,15 +10,23 @@ import { Ads, AdsSchema } from '../ads/model/ads.model';
 import { TalentService } from '../talent/service/talent.service';
 import { Talent, TalentSchema } from '../talent/model/talent.model';
 
+import {
+  AccountPromotion,
+  AccountPromotionSchema,
+} from '../promotion/model/account-promotion.model';
+import { ConfigurationModule } from '../configuration/configuration.module';
+
 @Module({
   controllers: [ReviewController],
   providers: [ReviewService, CommentService, AdsService, TalentService],
   imports: [
+    ConfigurationModule,
     MongooseModule.forFeatureAsync([
       { name: Review.name, useFactory: () => ReviewSchema },
       { name: Comment.name, useFactory: () => CommentSchema },
       { name: Ads.name, useFactory: () => AdsSchema },
       { name: Talent.name, useFactory: () => TalentSchema },
+      { name: AccountPromotion.name, useFactory: () => AccountPromotionSchema },
     ]),
   ],
 })

@@ -65,7 +65,10 @@ export class AccountController {
         file.buffer,
       );
 
-      file.buffer = await this.sharpService.compositeWaterMarkImage(buffer);
+      file.buffer = await this.sharpService.createWaterMarkImage(
+        buffer,
+        'HELLO WORLD',
+      );
     }
     return this.fileUploadService.fileUploadMany(files, id);
   }

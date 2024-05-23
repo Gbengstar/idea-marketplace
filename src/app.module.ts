@@ -27,6 +27,7 @@ import { ViewModule } from './view/view.module';
 import { OptionalTokenMiddleware } from '../libs/utils/src/token/middleware/optional-token.middleware';
 import { RevealModule } from './reveal/reveal.module';
 import { FollowModule } from './follow/follow.module';
+import { ConfigurationModule } from './configuration/configuration.module';
 
 @Module({
   imports: [
@@ -70,6 +71,8 @@ import { FollowModule } from './follow/follow.module';
     RevealModule,
 
     FollowModule,
+
+    ConfigurationModule,
   ],
   controllers: [AppController],
 })

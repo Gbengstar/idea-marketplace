@@ -23,7 +23,7 @@ COPY . .
 
 COPY *.TTF ./dist
 
-EXPOSE 9090
+EXPOSE 1000
 
 ENV NODE_ENV=development
 
