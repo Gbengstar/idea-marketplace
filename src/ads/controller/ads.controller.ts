@@ -7,6 +7,7 @@ import {
   Get,
   Logger,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFiles,
@@ -26,6 +27,7 @@ import {
   createAdsValidator,
   distinctAdsPropValidator,
   searchAdsValidator,
+  updateAdsValidator,
 } from '../validator/ads.validator';
 import {
   AvailableAdsDto,
@@ -270,6 +272,18 @@ export class AdsController {
   @Get('/:id')
   getAd(@Param('id') id: string) {
     return this.adsService.findOne({ _id: id });
+  }
+
+  @Patch('/:id')
+  UpdateAd(
+    @Param('id') _id: string,
+    @Body(new ObjectValidationPipe(updateAdsValidator)) ads: Ads,
+    @TokenDecorator() { id }: TokenDataDto,
+  ) {
+    return this.adsService.findOneAndUpdateOrErrorOut(
+      { _id, account: id },
+      ads,
+    );
   }
 
   @Post('/available')

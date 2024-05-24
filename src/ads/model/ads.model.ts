@@ -26,6 +26,9 @@ export class Ads {
   productOption: string;
 
   @Prop()
+  productType: string;
+
+  @Prop()
   condition: string;
 
   @Prop({ type: [String] })
