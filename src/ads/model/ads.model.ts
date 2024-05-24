@@ -60,6 +60,9 @@ export class Ads {
 
   @Prop()
   publishedDate: Date;
+
+  @Prop()
+  status: string;
 }
 
 export type AdsDocument = Ads & Document<Types.ObjectId>;

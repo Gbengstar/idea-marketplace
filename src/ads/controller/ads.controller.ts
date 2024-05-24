@@ -44,6 +44,7 @@ import { StoreService } from '../../store/service/store.service';
 import { FileUploadService } from '../../../libs/utils/src/file-upload/service/file-upload.service';
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 import { idsValidator } from '../../../libs/utils/src/validator/custom.validator';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 @Controller('ads')
 export class AdsController {
@@ -95,7 +96,7 @@ export class AdsController {
   ) {
     const match = { $match: { account: new Types.ObjectId(id) } };
 
-    const sortBy: Record<string, 1 | -1> = {};
+    const sortBy: Record<string, 1 | -1> = { createdAt: -1 };
 
     if ('keyword' in query) {
       match.$match['$or'] = [
@@ -152,8 +153,13 @@ export class AdsController {
       {
         $project: {
           viewsCount: '$viewsCount.viewsCount',
-          account: 1,
           // contact: 1,
+          account: 1,
+          title: 1,
+          status: 1,
+          price: 1,
+          condition: 1,
+          publishedDate: 1,
           createdAt: 1,
         },
       },
@@ -272,10 +278,26 @@ export class AdsController {
     @Body(new ObjectValidationPipe(availableAdsValidator))
     { available, ids }: AvailableAdsDto,
   ) {
-    return this.adsService.updateMany(
-      { _id: { $in: ids }, account },
-      { available },
-    );
+    let response;
+    switch (available) {
+      case true:
+        response = await this.adsService.updateMany(
+          { _id: { $in: ids }, account },
+          { $set: { status: ResourceStatusEnum.Published } },
+        );
+        this.logger.log('TRUE FUNCTION CALLED');
+        break;
+
+      case false:
+        response = await this.adsService.updateMany(
+          { _id: { $in: ids }, account },
+          { $set: { status: ResourceStatusEnum.Unavailable } },
+        );
+        this.logger.log('FALSE FUNCTION CALLED');
+        break;
+    }
+
+    return response;
   }
 
   @Delete()
