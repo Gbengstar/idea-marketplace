@@ -50,7 +50,13 @@ export const updateAdsValidator = Joi.object<Ads>({
 export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
   distinct: Joi.string()
     .required()
-    .valid('typeOfOwner', 'brandName', 'productOption', 'condition'),
+    .valid(
+      'typeOfOwner',
+      'brandName',
+      'productOption',
+      'condition',
+      'productType',
+    ),
   store: objectIdValidator,
   category: objectIdValidator,
   subCategory: objectIdValidator,
@@ -58,6 +64,7 @@ export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
   brandName: Joi.string(),
   productOption: Joi.string(),
   condition: Joi.string(),
+  productType: Joi.string(),
 });
 
 export const searchAdsValidator = paginationValidator.append<SearchAdsDto>({
