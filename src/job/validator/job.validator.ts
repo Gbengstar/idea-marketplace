@@ -4,6 +4,8 @@ import { JobLocationTypeEnum, JobTypeEnum } from '../enum/job.enum';
 import { StatusEnum } from '../../../libs/utils/src/enum/status.enum';
 import { landingPageSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import { LandingPagePaginatedSearchDto } from '../../../libs/utils/src/dto/search.dto';
+import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
+import { JobSearchDto } from '../dto/job.dto';
 
 export const createJobValidator = Joi.object<Job>({
   description: Joi.string().required(),
@@ -45,4 +47,8 @@ export const jobLandingPageSearchValidator = landingPageSearchValidator.append<
   jobTitle: Joi.string(),
   locationType: Joi.string().valid(...Object.values(JobLocationTypeEnum)),
   jobType: Joi.string().valid(...Object.values(JobTypeEnum)),
+});
+
+export const jobSearchValidator = paginationValidator.append<JobSearchDto>({
+  keyword: Joi.string(),
 });

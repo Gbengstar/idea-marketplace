@@ -1,4 +1,4 @@
-import { PipelineStage, SortOrder, Types } from 'mongoose';
+import { PipelineStage, Types } from 'mongoose';
 import { SharpService } from './../../../libs/utils/src/file-upload/service/sharp.service';
 import {
   Body,
@@ -47,6 +47,7 @@ import { FileUploadService } from '../../../libs/utils/src/file-upload/service/f
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 import { idsValidator } from '../../../libs/utils/src/validator/custom.validator';
 import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
+import { adsPipeline } from '../pipeline/ads.pipeline';
 
 @Controller('ads')
 export class AdsController {
@@ -96,7 +97,9 @@ export class AdsController {
     @Query(new ObjectValidationPipe(searchAdsValidator))
     { page, limit, ...query }: SearchAdsDto,
   ) {
-    const match = { $match: { account: new Types.ObjectId(id) } };
+    const match: PipelineStage.Match = {
+      $match: { account: new Types.ObjectId(id) },
+    };
 
     const sortBy: Record<string, 1 | -1> = { createdAt: -1 };
 
@@ -113,74 +116,12 @@ export class AdsController {
       sortBy[query.sortBy] = query?.orderBy ?? 1;
     }
 
-    const view: PipelineStage.Lookup = {
-      $lookup: {
-        from: 'views',
-        as: 'views',
-        let: { account: '$account', item: '$_id' },
-        pipeline: [
-          {
-            $match: { $expr: { $eq: [{ $toObjectId: '$item' }, '$$item'] } },
-          },
-          { $count: 'viewsCount' },
-        ],
-      },
-    };
+    const filter: PipelineStage[] = adsPipeline(match);
 
-    const contact: PipelineStage.Lookup = {
-      $lookup: {
-        from: 'views',
-        as: 'contacts',
-        let: { account: '$account', item: '$_id' },
-        pipeline: [
-          {
-            $match: { $expr: { $eq: [{ $toObjectId: '$item' }, '$$item'] } },
-          },
-          { $count: 'contact_count' },
-        ],
-      },
-    };
-    const filter: PipelineStage[] = [
-      match,
-      view,
-      // contact,
-      {
-        $addFields: {
-          viewsCount: {
-            $arrayElemAt: ['$views', 0],
-          },
-        },
-      },
-
-      {
-        $project: {
-          viewsCount: '$viewsCount.viewsCount',
-          // contact: 1,
-          account: 1,
-          title: 1,
-          status: 1,
-          price: 1,
-          condition: 1,
-          publishedDate: 1,
-          createdAt: 1,
-        },
-      },
-      {
-        $fill: {
-          output: {
-            viewsCount: { value: 0 },
-          },
-        },
-      },
-      {
-        $sort: { ...sortBy },
-      },
-    ];
-
-    this.logger.debug(sortBy);
     const documents = await this.adsService.aggregatePagination(
       { limit, page },
       filter,
+      sortBy,
     );
 
     return documents;
@@ -292,26 +233,14 @@ export class AdsController {
     @Body(new ObjectValidationPipe(availableAdsValidator))
     { available, ids }: AvailableAdsDto,
   ) {
-    let response;
-    switch (available) {
-      case true:
-        response = await this.adsService.updateMany(
-          { _id: { $in: ids }, account },
-          { $set: { status: ResourceStatusEnum.Published } },
-        );
-        this.logger.log('TRUE FUNCTION CALLED');
-        break;
+    const status = available
+      ? ResourceStatusEnum.Published
+      : ResourceStatusEnum.Unavailable;
 
-      case false:
-        response = await this.adsService.updateMany(
-          { _id: { $in: ids }, account },
-          { $set: { status: ResourceStatusEnum.Unavailable } },
-        );
-        this.logger.log('FALSE FUNCTION CALLED');
-        break;
-    }
-
-    return response;
+    return this.adsService.updateMany(
+      { _id: { $in: ids }, account },
+      { $set: { status } },
+    );
   }
 
   @Delete()

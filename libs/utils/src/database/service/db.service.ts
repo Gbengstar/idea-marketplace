@@ -582,8 +582,8 @@ export abstract class BaseService<C> {
     const [foundItems, [countData]] = await Promise.all([
       this.model.aggregate<T>([
         ...aggregate,
-        { $limit: pg.limit },
         { $skip: (pg.page - 1) * pg.limit },
+        { $limit: pg.limit },
         { $sort: sort ?? { createdAt: -1 } },
       ]),
       this.model.aggregate<{ count: number }>([
@@ -662,8 +662,8 @@ export abstract class BaseService<C> {
     const [foundItems, [countData]] = await Promise.all([
       this.model.aggregate<T>([
         search,
-        { $limit: pg.limit },
         { $skip: (pg.page - 1) * pg.limit },
+        { $limit: pg.limit },
         { $sort: sort ?? { createdAt: -1 } },
       ]),
       this.model.aggregate<{ count: number }>([search, { $count: 'count' }]),

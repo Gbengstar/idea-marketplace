@@ -19,11 +19,10 @@ import {
   ObjectValidationPipe,
   StringValidationPipe,
 } from '../../../libs/utils/src/pipe/validation.pipe';
-import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
-import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import {
   createJobValidator,
   jobLandingPageSearchValidator,
+  jobSearchValidator,
   updateJobValidator,
 } from '../validator/job.validator';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
@@ -41,6 +40,13 @@ import {
   querySort,
   regexQuery,
 } from '../../../libs/utils/src/general/function/general.function';
+import {
+  addViewsAndContactFields,
+  contactCountPipelineStage,
+  fillViewsAndCounts,
+  viewCountsPipelineStage,
+} from '../../ads/pipeline/ads.pipeline';
+import { JobSearchDto } from '../dto/job.dto';
 
 @Controller('job')
 export class JobController {
@@ -169,16 +175,48 @@ export class JobController {
 
   @Get()
   getJobs(
-    @TokenDecorator() { id: account }: TokenDataDto,
-    @Query(new ObjectValidationPipe(paginationValidator))
-    paginate: PaginationDto,
+    @TokenDecorator() { id }: TokenDataDto,
+    @Query(new ObjectValidationPipe(jobSearchValidator))
+    { keyword, ...paginate }: JobSearchDto,
   ) {
-    return this.jobService.paginatedResult(
-      paginate,
-      { account },
-      { createdAt: -1 },
-      [{ path: 'profile' }],
-    );
+    const match: PipelineStage.Match = {
+      $match: { account: new Types.ObjectId(id) },
+    };
+
+    if (keyword) {
+      match.$match['$or'] = [
+        { description: regexQuery(keyword) },
+        { brandName: regexQuery(keyword) },
+        { condition: regexQuery(keyword) },
+        { title: regexQuery(keyword) },
+      ];
+    }
+
+    const project = {
+      $project: {
+        viewsCount: '$viewsCount.viewsCount',
+        contactsCount: '$contactsCount.contactsCount',
+        jobTitle: 1,
+        salaryRange: 1,
+        locationType: 1,
+        applicationUrl: 1,
+        status: 1,
+        jobType: 1,
+      },
+    };
+
+    const filter: PipelineStage[] = [
+      match,
+      viewCountsPipelineStage,
+      contactCountPipelineStage,
+      addViewsAndContactFields,
+      project,
+      fillViewsAndCounts,
+    ];
+
+    return this.jobService.aggregatePagination(paginate, filter, {
+      createdAt: -1,
+    });
   }
 
   @Patch()
