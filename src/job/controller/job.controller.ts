@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Patch,
   Post,
   Query,
@@ -47,6 +48,9 @@ import {
   viewCountsPipelineStage,
 } from '../../ads/pipeline/ads.pipeline';
 import { JobSearchDto } from '../dto/job.dto';
+import { AvailableAdsDto } from '../../ads/dto/ads.dto';
+import { availableAdsValidator } from '../../ads/validator/ads.validator';
+import { StatusEnum } from '../../../libs/utils/src/enum/status.enum';
 
 @Controller('job')
 export class JobController {
@@ -185,10 +189,10 @@ export class JobController {
 
     if (keyword) {
       match.$match['$or'] = [
-        { description: regexQuery(keyword) },
-        { brandName: regexQuery(keyword) },
-        { condition: regexQuery(keyword) },
-        { title: regexQuery(keyword) },
+        { locationType: regexQuery(keyword) },
+        { jobTitle: regexQuery(keyword) },
+        { status: regexQuery(keyword) },
+        { jobType: regexQuery(keyword) },
       ];
     }
 
@@ -202,6 +206,7 @@ export class JobController {
         applicationUrl: 1,
         status: 1,
         jobType: 1,
+        expirationDate: 1,
       },
     };
 
@@ -219,9 +224,24 @@ export class JobController {
     });
   }
 
-  @Patch()
+  @Post('/available')
+  async availableUpdate(
+    @TokenDecorator() { id: account }: TokenDataDto,
+    @Body(new ObjectValidationPipe(availableAdsValidator))
+    { available, ids }: AvailableAdsDto,
+  ) {
+    const status = available ? StatusEnum.Active : StatusEnum.Unavailable;
+
+    return this.jobService.updateMany(
+      { _id: { $in: ids }, account },
+      { $set: { status } },
+    );
+  }
+
+  @Patch('/:id')
   updateJob(
-    @Query('id', new StringValidationPipe(objectIdValidator)) id: string,
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
     @Body(new ObjectValidationPipe(updateJobValidator)) job: Job,
     @TokenDecorator() { id: account }: TokenDataDto,
   ) {
@@ -229,6 +249,15 @@ export class JobController {
       { _id: id, account },
       job,
     );
+  }
+
+  @Get('/:id')
+  oneJob(
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
+    @TokenDecorator() { id: account }: TokenDataDto,
+  ) {
+    return this.jobService.findOneOrErrorOut({ _id: id, account });
   }
 
   @Delete()
