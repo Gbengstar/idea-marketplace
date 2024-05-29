@@ -17,7 +17,6 @@ import {
   availableAdsValidator,
   searchAdsValidator,
 } from '../../ads/validator/ads.validator';
-import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import { Talent } from '../model/talent.model';
 import { keywordSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import {

@@ -50,7 +50,7 @@ import {
 import { JobSearchDto } from '../dto/job.dto';
 import { AvailableAdsDto } from '../../ads/dto/ads.dto';
 import { availableAdsValidator } from '../../ads/validator/ads.validator';
-import { StatusEnum } from '../../../libs/utils/src/enum/status.enum';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 @Controller('job')
 export class JobController {
@@ -230,7 +230,9 @@ export class JobController {
     @Body(new ObjectValidationPipe(availableAdsValidator))
     { available, ids }: AvailableAdsDto,
   ) {
-    const status = available ? StatusEnum.Active : StatusEnum.Unavailable;
+    const status = available
+      ? ResourceStatusEnum.Published
+      : ResourceStatusEnum.Unavailable;
 
     return this.jobService.updateMany(
       { _id: { $in: ids }, account },
