@@ -26,6 +26,9 @@ export class Ads {
   productOption: string;
 
   @Prop()
+  productType: string;
+
+  @Prop()
   condition: string;
 
   @Prop({ type: [String] })
@@ -60,6 +63,9 @@ export class Ads {
 
   @Prop()
   publishedDate: Date;
+
+  @Prop()
+  status: string;
 }
 
 export type AdsDocument = Ads & Document<Types.ObjectId>;

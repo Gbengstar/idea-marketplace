@@ -8,4 +8,13 @@ export const getRevealLogValidator = Joi.object<RevealContactDto>({
   resource: Joi.string()
     .required()
     .valid(...Object.values(ResourceEnum)),
+  item: objectIdValidator,
+});
+
+export const createRevealLogValidator = Joi.object<RevealContactDto>({
+  account: objectIdValidator.required(),
+  resource: Joi.string()
+    .required()
+    .valid(...Object.values(ResourceEnum)),
+  item: objectIdValidator,
 });

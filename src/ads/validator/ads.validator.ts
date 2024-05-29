@@ -7,6 +7,7 @@ import {
   DistinctFilterDto,
   SearchAdsDto,
 } from '../dto/ads.dto';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 export const createAdsValidator = Joi.object<Ads>({
   store: objectIdValidator.required(),
@@ -24,12 +25,11 @@ export const createAdsValidator = Joi.object<Ads>({
   description: Joi.string().required(),
   images: Joi.array().min(5).items(Joi.string().required()),
   publishedDate: Joi.date().default(new Date()),
-  available: Joi.boolean().default(true),
+  status: Joi.string().default(ResourceStatusEnum.Published),
+  productType: Joi.string().required(),
 });
-export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
-  distinct: Joi.string()
-    .required()
-    .valid('typeOfOwner', 'brandName', 'productOption', 'condition'),
+
+export const updateAdsValidator = Joi.object<Ads>({
   store: objectIdValidator,
   category: objectIdValidator,
   subCategory: objectIdValidator,
@@ -37,6 +37,34 @@ export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
   brandName: Joi.string(),
   productOption: Joi.string(),
   condition: Joi.string(),
+  glance: Joi.array().min(4).items(Joi.string().required()),
+  peculiarities: Joi.array().min(4).items(Joi.string().required()),
+  price: Joi.number(),
+  negotiable: Joi.boolean(),
+  title: Joi.string(),
+  description: Joi.string(),
+  images: Joi.array().min(5).items(Joi.string().required()),
+  productType: Joi.string(),
+});
+
+export const distinctAdsPropValidator = Joi.object<DistinctFilterDto>({
+  distinct: Joi.string()
+    .required()
+    .valid(
+      'typeOfOwner',
+      'brandName',
+      'productOption',
+      'condition',
+      'productType',
+    ),
+  store: objectIdValidator,
+  category: objectIdValidator,
+  subCategory: objectIdValidator,
+  typeOfOwner: Joi.string(),
+  brandName: Joi.string(),
+  productOption: Joi.string(),
+  condition: Joi.string(),
+  productType: Joi.string(),
 });
 
 export const searchAdsValidator = paginationValidator.append<SearchAdsDto>({

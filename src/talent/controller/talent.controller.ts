@@ -1,20 +1,33 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { TalentService } from '../service/talent.service';
 import { TokenDataDto } from '../../../libs/utils/src/token/dto/token.dto';
 import { TokenDecorator } from '../../../libs/utils/src/token/decorator/token.decorator';
 import { ObjectValidationPipe } from '../../../libs/utils/src/pipe/validation.pipe';
-import { searchAdsValidator } from '../../ads/validator/ads.validator';
-import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
+import {
+  availableAdsValidator,
+  searchAdsValidator,
+} from '../../ads/validator/ads.validator';
 import { Talent } from '../model/talent.model';
 import { keywordSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import {
   KeywordPaginatedSearchDto,
   LandingPagePaginatedSearchDto,
 } from '../../../libs/utils/src/dto/search.dto';
-import { FilterQuery, PipelineStage } from 'mongoose';
+import { FilterQuery, PipelineStage, Types } from 'mongoose';
 import {
   createTalentValidator,
   talentLandingPageSearchValidator,
+  updateTalentValidator,
 } from '../validator/talent.validator';
 import { ViewEventGuard } from '../../view/guard/guard.view';
 import { ViewResource } from '../../view/decorator/view.decorator';
@@ -23,6 +36,15 @@ import {
   querySort,
   regexQuery,
 } from '../../../libs/utils/src/general/function/general.function';
+import { AvailableAdsDto, SearchAdsDto } from '../../ads/dto/ads.dto';
+import {
+  addViewsAndContactFields,
+  contactCountPipelineStage,
+  fillViewsAndCounts,
+  viewCountsPipelineStage,
+} from '../../ads/pipeline/ads.pipeline';
+import { idsValidator } from '../../../libs/utils/src/validator/custom.validator';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 @Controller('talent')
 export class TalentController {
@@ -31,11 +53,48 @@ export class TalentController {
 
   @Get()
   getTalents(
-    @TokenDecorator() { id: account }: TokenDataDto,
+    @TokenDecorator() { id }: TokenDataDto,
     @Query(new ObjectValidationPipe(searchAdsValidator))
-    { page, limit }: PaginationDto,
+    { page, limit, keyword }: SearchAdsDto,
   ) {
-    return this.talentService.paginatedResult({ page, limit }, { account });
+    const match: PipelineStage.Match = {
+      $match: { account: new Types.ObjectId(id) },
+    };
+
+    if (keyword) {
+      match.$match['$or'] = [
+        { description: regexQuery(keyword) },
+        { name: regexQuery(keyword) },
+        { mainSkill: regexQuery(keyword) },
+        { location: regexQuery(keyword) },
+        { yearsOfExperience: regexQuery(keyword) },
+      ];
+    }
+
+    const project = {
+      $project: {
+        viewsCount: '$viewsCount.viewsCount',
+        contactsCount: '$contactsCount.contactsCount',
+        name: 1,
+        mainSkill: 1,
+        yearsOfExperience: 1,
+        publishedDate: 1,
+        status: 1,
+      },
+    };
+
+    const filter: PipelineStage[] = [
+      match,
+      viewCountsPipelineStage,
+      contactCountPipelineStage,
+      addViewsAndContactFields,
+      project,
+      fillViewsAndCounts,
+    ];
+
+    return this.talentService.aggregatePagination({ page, limit }, filter, {
+      createdAt: -1,
+    });
   }
 
   @Post()
@@ -92,5 +151,51 @@ export class TalentController {
       pipeline,
       this.sortOrder,
     );
+  }
+
+  @Patch('/:id')
+  UpdateTalent(
+    @Param('id') _id: string,
+    @Body(new ObjectValidationPipe(updateTalentValidator)) talent: Talent,
+    @TokenDecorator() { id }: TokenDataDto,
+  ) {
+    return this.talentService.findOneAndUpdateOrErrorOut(
+      { _id, account: id },
+      talent,
+    );
+  }
+
+  @Get('/:id')
+  oneTalent(@Param('id') _id: string, @TokenDecorator() { id }: TokenDataDto) {
+    return this.talentService.findOneOrErrorOut({ _id, account: id });
+  }
+
+  @Post('/available')
+  async availableUpdate(
+    @TokenDecorator() { id: account }: TokenDataDto,
+    @Body(new ObjectValidationPipe(availableAdsValidator))
+    { available, ids }: AvailableAdsDto,
+  ) {
+    await this.talentService.updateMany(
+      {},
+      { $set: { status: ResourceStatusEnum.Published } },
+    );
+    const status = available
+      ? ResourceStatusEnum.Published
+      : ResourceStatusEnum.Unavailable;
+
+    return this.talentService.updateMany(
+      { _id: { $in: ids }, account },
+      { $set: { status } },
+    );
+  }
+
+  @Delete()
+  async delete(
+    @TokenDecorator() { id: account }: TokenDataDto,
+    @Query(new ObjectValidationPipe(idsValidator))
+    { ids }: { ids: string[] },
+  ) {
+    return this.talentService.deleteMany({ _id: { $in: ids }, account });
   }
 }

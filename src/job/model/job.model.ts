@@ -1,11 +1,10 @@
 import { SchemaTypes } from 'mongoose';
-import { dbSchemaOptions } from './../../../libs/utils/src/database/config/db.config';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { JobSalaryRange } from '../dto/job.dto';
 import { JobLocationTypeEnum, JobTypeEnum } from '../enum/job.enum';
-import { StatusEnum } from '../../../libs/utils/src/enum/status.enum';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
-@Schema(dbSchemaOptions)
+@Schema({ timestamps: true })
 export class Job {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Account' })
   account: string;
@@ -41,7 +40,7 @@ export class Job {
   publishedDate: Date;
 
   @Prop({ type: String })
-  status: StatusEnum;
+  status: ResourceStatusEnum;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

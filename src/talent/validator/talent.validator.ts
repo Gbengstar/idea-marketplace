@@ -5,6 +5,7 @@ import { WorkExperience } from '../schema/talent-work-experience.schema';
 import { Certification } from '../schema/talent-certification.schema';
 import { landingPageSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import { LandingPagePaginatedSearchDto } from '../../../libs/utils/src/dto/search.dto';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 export const createTalentValidator = Joi.object<Talent>({
   photo: Joi.string().uri().required(),
@@ -49,6 +50,53 @@ export const createTalentValidator = Joi.object<Talent>({
     }),
   ),
   publishedDate: Joi.date().default(new Date()),
+  status: Joi.string()
+    .default(ResourceStatusEnum.Published)
+    .valid(ResourceStatusEnum.Published),
+});
+
+export const updateTalentValidator = Joi.object<Talent>({
+  photo: Joi.string().uri(),
+  name: Joi.string(),
+  portfolioUrl: Joi.string().uri(),
+  cv: Joi.string().uri(),
+  description: Joi.string(),
+  skills: Joi.array().items(Joi.string()),
+  mainSkill: Joi.string(),
+  location: Joi.string(),
+  yearsOfExperience: Joi.string(),
+  education: Joi.array().items(
+    Joi.object<Education>({
+      name: Joi.string().required(),
+      course: Joi.string().required(),
+      degreeOrCertificate: Joi.string().required(),
+      startDate: Joi.date().iso(),
+      endDate: Joi.date().iso(),
+      country: Joi.string(),
+      state: Joi.string(),
+    }),
+  ),
+  workExperience: Joi.array().items(
+    Joi.object<WorkExperience>({
+      company: Joi.string().required(),
+      position: Joi.string().required(),
+      locationType: Joi.string().valid().required(),
+      startDate: Joi.date().iso(),
+      endDate: Joi.date().iso(),
+      country: Joi.string(),
+      state: Joi.string(),
+      description: Joi.string(),
+    }),
+  ),
+  certification: Joi.array().items(
+    Joi.object<Certification>({
+      name: Joi.string().required(),
+      provider: Joi.string().required(),
+      issuedDate: Joi.date().iso(),
+      certificateIdOrUrl: Joi.string().required(),
+      description: Joi.string(),
+    }),
+  ),
 });
 
 export const talentLandingPageSearchValidator =

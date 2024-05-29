@@ -1,4 +1,4 @@
-import { PipelineStage, SortOrder, Types } from 'mongoose';
+import { PipelineStage, Types } from 'mongoose';
 import { SharpService } from './../../../libs/utils/src/file-upload/service/sharp.service';
 import {
   Body,
@@ -7,6 +7,7 @@ import {
   Get,
   Logger,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFiles,
@@ -26,6 +27,7 @@ import {
   createAdsValidator,
   distinctAdsPropValidator,
   searchAdsValidator,
+  updateAdsValidator,
 } from '../validator/ads.validator';
 import {
   AvailableAdsDto,
@@ -44,6 +46,8 @@ import { StoreService } from '../../store/service/store.service';
 import { FileUploadService } from '../../../libs/utils/src/file-upload/service/file-upload.service';
 import { regexQuery } from '../../../libs/utils/src/general/function/general.function';
 import { idsValidator } from '../../../libs/utils/src/validator/custom.validator';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
+import { adsPipeline } from '../pipeline/ads.pipeline';
 
 @Controller('ads')
 export class AdsController {
@@ -93,9 +97,11 @@ export class AdsController {
     @Query(new ObjectValidationPipe(searchAdsValidator))
     { page, limit, ...query }: SearchAdsDto,
   ) {
-    const match = { $match: { account: new Types.ObjectId(id) } };
+    const match: PipelineStage.Match = {
+      $match: { account: new Types.ObjectId(id) },
+    };
 
-    const sortBy: Record<string, 1 | -1> = {};
+    const sortBy: Record<string, 1 | -1> = { createdAt: -1 };
 
     if ('keyword' in query) {
       match.$match['$or'] = [
@@ -110,69 +116,12 @@ export class AdsController {
       sortBy[query.sortBy] = query?.orderBy ?? 1;
     }
 
-    const view: PipelineStage.Lookup = {
-      $lookup: {
-        from: 'views',
-        as: 'views',
-        let: { account: '$account', item: '$_id' },
-        pipeline: [
-          {
-            $match: { $expr: { $eq: [{ $toObjectId: '$item' }, '$$item'] } },
-          },
-          { $count: 'viewsCount' },
-        ],
-      },
-    };
+    const filter: PipelineStage[] = adsPipeline(match);
 
-    const contact: PipelineStage.Lookup = {
-      $lookup: {
-        from: 'views',
-        as: 'contacts',
-        let: { account: '$account', item: '$_id' },
-        pipeline: [
-          {
-            $match: { $expr: { $eq: [{ $toObjectId: '$item' }, '$$item'] } },
-          },
-          { $count: 'contact_count' },
-        ],
-      },
-    };
-    const filter: PipelineStage[] = [
-      match,
-      view,
-      // contact,
-      {
-        $addFields: {
-          viewsCount: {
-            $arrayElemAt: ['$views', 0],
-          },
-        },
-      },
-
-      {
-        $project: {
-          viewsCount: '$viewsCount.viewsCount',
-          account: 1,
-          // contact: 1,
-          createdAt: 1,
-        },
-      },
-      {
-        $fill: {
-          output: {
-            viewsCount: { value: 0 },
-          },
-        },
-      },
-      {
-        $sort: { ...sortBy },
-      },
-    ];
-
-    this.logger.debug(sortBy);
     const documents = await this.adsService.aggregatePagination(
       { limit, page },
       filter,
+      sortBy,
     );
 
     return documents;
@@ -266,15 +215,31 @@ export class AdsController {
     return this.adsService.findOne({ _id: id });
   }
 
+  @Patch('/:id')
+  UpdateAd(
+    @Param('id') _id: string,
+    @Body(new ObjectValidationPipe(updateAdsValidator)) ads: Ads,
+    @TokenDecorator() { id }: TokenDataDto,
+  ) {
+    return this.adsService.findOneAndUpdateOrErrorOut(
+      { _id, account: id },
+      ads,
+    );
+  }
+
   @Post('/available')
   async availableUpdate(
     @TokenDecorator() { id: account }: TokenDataDto,
     @Body(new ObjectValidationPipe(availableAdsValidator))
     { available, ids }: AvailableAdsDto,
   ) {
+    const status = available
+      ? ResourceStatusEnum.Published
+      : ResourceStatusEnum.Unavailable;
+
     return this.adsService.updateMany(
       { _id: { $in: ids }, account },
-      { available },
+      { $set: { status } },
     );
   }
 

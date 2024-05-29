@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Patch,
   Post,
   Query,
@@ -19,11 +20,10 @@ import {
   ObjectValidationPipe,
   StringValidationPipe,
 } from '../../../libs/utils/src/pipe/validation.pipe';
-import { paginationValidator } from '../../../libs/utils/src/pagination/validator/paginate.validator';
-import { PaginationDto } from '../../../libs/utils/src/pagination/dto/paginate.dto';
 import {
   createJobValidator,
   jobLandingPageSearchValidator,
+  jobSearchValidator,
   updateJobValidator,
 } from '../validator/job.validator';
 import { objectIdValidator } from '../../../libs/utils/src/validator/objectId.validator';
@@ -41,6 +41,16 @@ import {
   querySort,
   regexQuery,
 } from '../../../libs/utils/src/general/function/general.function';
+import {
+  addViewsAndContactFields,
+  contactCountPipelineStage,
+  fillViewsAndCounts,
+  viewCountsPipelineStage,
+} from '../../ads/pipeline/ads.pipeline';
+import { JobSearchDto } from '../dto/job.dto';
+import { AvailableAdsDto } from '../../ads/dto/ads.dto';
+import { availableAdsValidator } from '../../ads/validator/ads.validator';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 @Controller('job')
 export class JobController {
@@ -169,21 +179,71 @@ export class JobController {
 
   @Get()
   getJobs(
-    @TokenDecorator() { id: account }: TokenDataDto,
-    @Query(new ObjectValidationPipe(paginationValidator))
-    paginate: PaginationDto,
+    @TokenDecorator() { id }: TokenDataDto,
+    @Query(new ObjectValidationPipe(jobSearchValidator))
+    { keyword, ...paginate }: JobSearchDto,
   ) {
-    return this.jobService.paginatedResult(
-      paginate,
-      { account },
-      { createdAt: -1 },
-      [{ path: 'profile' }],
+    const match: PipelineStage.Match = {
+      $match: { account: new Types.ObjectId(id) },
+    };
+
+    if (keyword) {
+      match.$match['$or'] = [
+        { locationType: regexQuery(keyword) },
+        { jobTitle: regexQuery(keyword) },
+        { status: regexQuery(keyword) },
+        { jobType: regexQuery(keyword) },
+      ];
+    }
+
+    const project = {
+      $project: {
+        viewsCount: '$viewsCount.viewsCount',
+        contactsCount: '$contactsCount.contactsCount',
+        jobTitle: 1,
+        salaryRange: 1,
+        locationType: 1,
+        applicationUrl: 1,
+        status: 1,
+        jobType: 1,
+        expirationDate: 1,
+      },
+    };
+
+    const filter: PipelineStage[] = [
+      match,
+      viewCountsPipelineStage,
+      contactCountPipelineStage,
+      addViewsAndContactFields,
+      project,
+      fillViewsAndCounts,
+    ];
+
+    return this.jobService.aggregatePagination(paginate, filter, {
+      createdAt: -1,
+    });
+  }
+
+  @Post('/available')
+  async availableUpdate(
+    @TokenDecorator() { id: account }: TokenDataDto,
+    @Body(new ObjectValidationPipe(availableAdsValidator))
+    { available, ids }: AvailableAdsDto,
+  ) {
+    const status = available
+      ? ResourceStatusEnum.Published
+      : ResourceStatusEnum.Unavailable;
+
+    return this.jobService.updateMany(
+      { _id: { $in: ids }, account },
+      { $set: { status } },
     );
   }
 
-  @Patch()
+  @Patch('/:id')
   updateJob(
-    @Query('id', new StringValidationPipe(objectIdValidator)) id: string,
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
     @Body(new ObjectValidationPipe(updateJobValidator)) job: Job,
     @TokenDecorator() { id: account }: TokenDataDto,
   ) {
@@ -191,6 +251,15 @@ export class JobController {
       { _id: id, account },
       job,
     );
+  }
+
+  @Get('/:id')
+  oneJob(
+    @Param('id', new StringValidationPipe(objectIdValidator.required()))
+    id: string,
+    @TokenDecorator() { id: account }: TokenDataDto,
+  ) {
+    return this.jobService.findOneOrErrorOut({ _id: id, account });
   }
 
   @Delete()

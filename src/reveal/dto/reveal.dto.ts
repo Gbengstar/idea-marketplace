@@ -1,3 +1,7 @@
 import { ResourceEnum } from '../../../libs/utils/src/enum/resource.enum';
 
-export type RevealContactDto = { account: string; resource: ResourceEnum };
+export type RevealContactDto = {
+  account: string;
+  resource: ResourceEnum;
+  item: string;
+};

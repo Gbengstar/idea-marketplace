@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   InternalServerErrorException,
   Logger,
   Post,
@@ -310,5 +311,22 @@ export class AuthController {
     const link = `http://localhost:3000/reset-password?${hashCode}`;
 
     return { message: 'email sent', ...returnOnDev({ link, code }) };
+  }
+
+  @Get('token')
+  async getToken(@TokenDecorator() { id }: TokenDataDto) {
+    const account = await this.accountService.findOneOrErrorOut({
+      _id: id,
+    });
+
+    const tokenData: TokenDataDto = {
+      id: account._id.toString(),
+      role: account.role,
+      email: account.email,
+    };
+
+    const accessToken = await this.tokenService.signToken(tokenData);
+
+    return { accessToken, account };
   }
 }
