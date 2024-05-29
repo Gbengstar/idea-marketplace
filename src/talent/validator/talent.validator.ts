@@ -5,6 +5,7 @@ import { WorkExperience } from '../schema/talent-work-experience.schema';
 import { Certification } from '../schema/talent-certification.schema';
 import { landingPageSearchValidator } from '../../../libs/utils/src/validator/search.validator';
 import { LandingPagePaginatedSearchDto } from '../../../libs/utils/src/dto/search.dto';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 export const createTalentValidator = Joi.object<Talent>({
   photo: Joi.string().uri().required(),
@@ -49,6 +50,9 @@ export const createTalentValidator = Joi.object<Talent>({
     }),
   ),
   publishedDate: Joi.date().default(new Date()),
+  status: Joi.string()
+    .default(ResourceStatusEnum.Published)
+    .valid(ResourceStatusEnum.Published),
 });
 
 export const updateTalentValidator = Joi.object<Talent>({

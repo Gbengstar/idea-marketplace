@@ -43,8 +43,8 @@ import {
   fillViewsAndCounts,
   viewCountsPipelineStage,
 } from '../../ads/pipeline/ads.pipeline';
-import { StatusEnum } from '../../../libs/utils/src/enum/status.enum';
 import { idsValidator } from '../../../libs/utils/src/validator/custom.validator';
+import { ResourceStatusEnum } from '../../../libs/utils/src/dto/resource.dto';
 
 @Controller('talent')
 export class TalentController {
@@ -176,7 +176,13 @@ export class TalentController {
     @Body(new ObjectValidationPipe(availableAdsValidator))
     { available, ids }: AvailableAdsDto,
   ) {
-    const status = available ? StatusEnum.Active : StatusEnum.Unavailable;
+    await this.talentService.updateMany(
+      {},
+      { $set: { status: ResourceStatusEnum.Published } },
+    );
+    const status = available
+      ? ResourceStatusEnum.Published
+      : ResourceStatusEnum.Unavailable;
 
     return this.talentService.updateMany(
       { _id: { $in: ids }, account },
